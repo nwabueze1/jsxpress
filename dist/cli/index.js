@@ -5,10 +5,10 @@ import { dev } from "./commands/dev.js";
 import { build } from "./commands/build.js";
 import { migrate } from "./commands/migrate.js";
 const HELP = `
-Usage: jsxpress <command> [options]
+Usage: jsxserve <command> [options]
 
 Commands:
-  init [name]                         Create a new jsxpress project
+  init [name]                         Create a new jsxserve project
   generate <type> <name> [fields...]  Generate a component (alias: g)
   dev                                 Start development server with watch mode
   build                               Compile TypeScript with tsc
@@ -25,13 +25,13 @@ Options:
   --help      Show this help message
 
 Examples:
-  jsxpress init my-app
-  jsxpress g controller users
-  jsxpress g model Post title:text views:integer
-  jsxpress g middleware auth
-  jsxpress g migration create_users
-  jsxpress dev
-  jsxpress migrate up
+  jsxserve init my-app
+  jsxserve g controller users
+  jsxserve g model Post title:text views:integer
+  jsxserve g middleware auth
+  jsxserve g migration create_users
+  jsxserve dev
+  jsxserve migrate up
 `.trim();
 function parseArgs(argv) {
     const force = argv.includes("--force");

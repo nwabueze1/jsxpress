@@ -3,8 +3,8 @@ function toPascalCase(s) {
 }
 export function controllerTemplate(name) {
     const className = toPascalCase(name);
-    return `import { Controller, type JsxpressRequest } from "jsxpress";
-import { Res } from "jsxpress";
+    return `import { Controller, type JsxpressRequest } from "jsxserve";
+import { Res } from "jsxserve";
 
 export class ${className} extends Controller {
   name = "${name}";

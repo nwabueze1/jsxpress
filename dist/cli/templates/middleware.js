@@ -3,7 +3,7 @@ function toPascalCase(s) {
 }
 export function middlewareTemplate(name) {
     const className = toPascalCase(name);
-    return `import { Middleware, type JsxpressRequest, type NextFunction } from "jsxpress";
+    return `import { Middleware, type JsxpressRequest, type NextFunction } from "jsxserve";
 
 export class ${className} extends Middleware {
   async handle(req: JsxpressRequest, next: NextFunction): Promise<Response> {

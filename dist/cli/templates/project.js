@@ -7,8 +7,8 @@ export function appTemplate(dialect) {
             mongodb: "mongodb://localhost:27017/myapp",
         };
         const url = urlMap[dialect] ?? "./data.db";
-        return `import { App, Database } from "jsxpress";
-import { serve } from "jsxpress";
+        return `import { App, Database } from "jsxserve";
+import { serve } from "jsxserve";
 import { Home } from "./controllers/home.js";
 
 const app = (
@@ -22,8 +22,8 @@ const app = (
 serve(app);
 `;
     }
-    return `import { App } from "jsxpress";
-import { serve } from "jsxpress";
+    return `import { App } from "jsxserve";
+import { serve } from "jsxserve";
 import { Home } from "./controllers/home.js";
 
 const app = (
@@ -36,8 +36,8 @@ serve(app);
 `;
 }
 export function homeControllerTemplate() {
-    return `import { Controller, type JsxpressRequest } from "jsxpress";
-import { Res } from "jsxpress";
+    return `import { Controller, type JsxpressRequest } from "jsxserve";
+import { Res } from "jsxserve";
 
 export class Home extends Controller {
   name = "home";
@@ -66,7 +66,7 @@ export function tsconfigTemplate() {
     "resolveJsonModule": true,
     "isolatedModules": true,
     "jsx": "react-jsx",
-    "jsxImportSource": "jsxpress"
+    "jsxImportSource": "jsxserve"
   },
   "include": ["src"],
   "exclude": ["node_modules", "dist"]
@@ -75,7 +75,7 @@ export function tsconfigTemplate() {
 }
 export function packageJsonTemplate(name, dialect) {
     const deps = {
-        jsxpress: "latest",
+        jsxserve: "latest",
     };
     const devDeps = {
         "@types/node": "^22.0.0",
@@ -97,8 +97,8 @@ export function packageJsonTemplate(name, dialect) {
         version: "0.1.0",
         type: "module",
         scripts: {
-            dev: "npx jsxpress dev",
-            build: "npx jsxpress build",
+            dev: "npx jsxserve dev",
+            build: "npx jsxserve build",
         },
         dependencies: deps,
         devDependencies: devDeps,

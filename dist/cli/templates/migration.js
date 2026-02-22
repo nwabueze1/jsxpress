@@ -1,5 +1,5 @@
 export function migrationTemplate() {
-    return `import type { DatabaseAdapter } from "jsxpress";
+    return `import type { DatabaseAdapter } from "jsxserve";
 
 export async function up(adapter: DatabaseAdapter): Promise<void> {
   await adapter.raw("");

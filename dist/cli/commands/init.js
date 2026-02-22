@@ -55,6 +55,6 @@ export async function init(projectName) {
     console.log("Next steps:");
     console.log(`  cd ${name}`);
     console.log("  npm install");
-    console.log("  npx jsxpress dev");
+    console.log("  npx jsxserve dev");
 }
 //# sourceMappingURL=init.js.map
