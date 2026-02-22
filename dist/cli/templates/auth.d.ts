@@ -1,0 +1,17 @@
+export declare function authJwtTemplate(): string;
+export declare function authPasswordTemplate(): string;
+export declare function authOAuthUtilTemplate(provider: string): string;
+export declare function userModelTemplate(): string;
+export declare function oauthAccountModelTemplate(): string;
+export declare function refreshTokenModelTemplate(): string;
+export declare function userMigrationTemplate(dialect: string): string;
+export declare function oauthAccountMigrationTemplate(dialect: string): string;
+export declare function refreshTokenMigrationTemplate(dialect: string): string;
+export declare function authMiddlewareTemplate(): string;
+export declare function authRegisterControllerTemplate(): string;
+export declare function authLoginControllerTemplate(): string;
+export declare function authRefreshControllerTemplate(): string;
+export declare function authLogoutControllerTemplate(): string;
+export declare function authOAuthControllerTemplate(provider: string): string;
+export declare function authOAuthCallbackControllerTemplate(provider: string): string;
+//# sourceMappingURL=auth.d.ts.map

@@ -1,4 +1,13 @@
-export function appTemplate(dialect?: string): string {
+import { randomBytes } from "node:crypto";
+
+export interface AuthConfig {
+  enabled: boolean;
+  google?: boolean;
+  facebook?: boolean;
+  github?: boolean;
+}
+
+export function appTemplate(dialect?: string, auth?: AuthConfig): string {
   if (dialect && dialect !== "none") {
     const urlMap: Record<string, string> = {
       sqlite: "./data.db",
@@ -7,6 +16,70 @@ export function appTemplate(dialect?: string): string {
       mongodb: "mongodb://localhost:27017/myapp",
     };
     const url = urlMap[dialect] ?? "./data.db";
+
+    if (auth?.enabled) {
+      const providers = (["google", "facebook", "github"] as const).filter(
+        (p) => auth[p],
+      );
+
+      const imports = [
+        `import { App, Config, Database, v } from "jsxserve";`,
+        `import { serve } from "jsxserve";`,
+        `import { Home } from "./controllers/home.js";`,
+        `import { Register } from "./controllers/auth/register.js";`,
+        `import { Login } from "./controllers/auth/login.js";`,
+        `import { Refresh } from "./controllers/auth/refresh.js";`,
+        `import { Logout } from "./controllers/auth/logout.js";`,
+      ];
+
+      const controllers = [
+        `        <Home path="/" />`,
+        `        <Register path="/auth/register" />`,
+        `        <Login path="/auth/login" />`,
+        `        <Refresh path="/auth/refresh" />`,
+        `        <Logout path="/auth/logout" />`,
+      ];
+
+      for (const p of providers) {
+        const name = p.charAt(0).toUpperCase() + p.slice(1);
+        imports.push(
+          `import { ${name}Auth } from "./controllers/auth/${p}.js";`,
+        );
+        imports.push(
+          `import { ${name}Callback } from "./controllers/auth/${p}-callback.js";`,
+        );
+        controllers.push(`        <${name}Auth path="/auth/${p}" />`);
+        controllers.push(
+          `        <${name}Callback path="/auth/${p}/callback" />`,
+        );
+      }
+
+      const schemaEntries = ["PORT: v.number()", "JWT_SECRET: v.string()"];
+      for (const p of providers) {
+        const prefix = p.toUpperCase();
+        schemaEntries.push(`${prefix}_CLIENT_ID: v.string()`);
+        schemaEntries.push(`${prefix}_CLIENT_SECRET: v.string()`);
+        schemaEntries.push(`${prefix}_REDIRECT_URI: v.string()`);
+      }
+
+      return `${imports.join("\n")}
+
+const app = (
+  <App port={3000}>
+    <Config
+      schema={{ ${schemaEntries.join(", ")} }}
+      env=".env"
+    >
+      <Database dialect="${dialect}" url="${url}">
+${controllers.join("\n")}
+      </Database>
+    </Config>
+  </App>
+);
+
+serve(app);
+`;
+    }
 
     return `import { App, Config, Database, v } from "jsxserve";
 import { serve } from "jsxserve";
@@ -88,7 +161,11 @@ export function tsconfigTemplate(): string {
 `;
 }
 
-export function packageJsonTemplate(name: string, dialect?: string): string {
+export function packageJsonTemplate(
+  name: string,
+  dialect?: string,
+  auth?: boolean,
+): string {
   const deps: Record<string, string> = {
     jsxserve: "latest",
   };
@@ -109,6 +186,10 @@ export function packageJsonTemplate(name: string, dialect?: string): string {
     if (dep) deps[dep] = "latest";
   }
 
+  if (auth) {
+    deps["jose"] = "latest";
+  }
+
   const pkg = {
     name,
     version: "0.1.0",
@@ -124,7 +205,9 @@ export function packageJsonTemplate(name: string, dialect?: string): string {
   return JSON.stringify(pkg, null, 2) + "\n";
 }
 
-export function envTemplate(dialect?: string): string {
+export function envTemplate(dialect?: string, auth?: AuthConfig): string {
+  let result = "PORT=3000\n";
+
   if (dialect && dialect !== "none") {
     const urlMap: Record<string, string> = {
       sqlite: "./data.db",
@@ -133,15 +216,31 @@ export function envTemplate(dialect?: string): string {
       mongodb: "mongodb://localhost:27017/myapp",
     };
     const url = urlMap[dialect] ?? "./data.db";
-
-    return `PORT=3000
-
-# Database connection URL — update this for your environment
-DATABASE_URL=${url}
-`;
+    result += `\n# Database connection URL — update this for your environment\nDATABASE_URL=${url}\n`;
   }
 
-  return `PORT=3000\n`;
+  if (auth?.enabled) {
+    const secret = randomBytes(32).toString("hex");
+    result += `\n# Authentication\nJWT_SECRET=${secret}\nJWT_ACCESS_EXPIRY=15m\nJWT_REFRESH_EXPIRY=7d\n`;
+
+    const providerConfigs: Record<string, { name: string; callbackPath: string }> = {
+      google: { name: "Google", callbackPath: "/auth/google/callback" },
+      facebook: { name: "Facebook", callbackPath: "/auth/facebook/callback" },
+      github: { name: "GitHub", callbackPath: "/auth/github/callback" },
+    };
+
+    for (const [key, config] of Object.entries(providerConfigs)) {
+      if (auth[key as keyof AuthConfig]) {
+        const prefix = key.toUpperCase();
+        result += `\n# ${config.name} OAuth\n`;
+        result += `${prefix}_CLIENT_ID=your-${key}-client-id\n`;
+        result += `${prefix}_CLIENT_SECRET=your-${key}-client-secret\n`;
+        result += `${prefix}_REDIRECT_URI=http://localhost:3000${config.callbackPath}\n`;
+      }
+    }
+  }
+
+  return result;
 }
 
 export function gitignoreTemplate(): string {
