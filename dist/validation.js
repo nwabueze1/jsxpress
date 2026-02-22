@@ -156,6 +156,7 @@ export class ArraySchema extends BaseSchema {
         return errors;
     }
 }
+export { BaseSchema };
 export const v = {
     string: () => new StringSchema(),
     number: () => new NumberSchema(),

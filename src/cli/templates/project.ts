@@ -8,15 +8,20 @@ export function appTemplate(dialect?: string): string {
     };
     const url = urlMap[dialect] ?? "./data.db";
 
-    return `import { App, Database } from "jsxserve";
+    return `import { App, Config, Database, v } from "jsxserve";
 import { serve } from "jsxserve";
 import { Home } from "./controllers/home.js";
 
 const app = (
   <App port={3000}>
-    <Database dialect="${dialect}" url="${url}">
-      <Home path="/" />
-    </Database>
+    <Config
+      schema={{ PORT: v.number() }}
+      env=".env"
+    >
+      <Database dialect="${dialect}" url="${url}">
+        <Home path="/" />
+      </Database>
+    </Config>
   </App>
 );
 
@@ -24,13 +29,18 @@ serve(app);
 `;
   }
 
-  return `import { App } from "jsxserve";
+  return `import { App, Config, v } from "jsxserve";
 import { serve } from "jsxserve";
 import { Home } from "./controllers/home.js";
 
 const app = (
   <App port={3000}>
-    <Home path="/" />
+    <Config
+      schema={{ PORT: v.number() }}
+      env=".env"
+    >
+      <Home path="/" />
+    </Config>
   </App>
 );
 
@@ -112,6 +122,26 @@ export function packageJsonTemplate(name: string, dialect?: string): string {
   };
 
   return JSON.stringify(pkg, null, 2) + "\n";
+}
+
+export function envTemplate(dialect?: string): string {
+  if (dialect && dialect !== "none") {
+    const urlMap: Record<string, string> = {
+      sqlite: "./data.db",
+      postgres: "postgres://localhost:5432/myapp",
+      mysql: "mysql://localhost:3306/myapp",
+      mongodb: "mongodb://localhost:27017/myapp",
+    };
+    const url = urlMap[dialect] ?? "./data.db";
+
+    return `PORT=3000
+
+# Database connection URL — update this for your environment
+DATABASE_URL=${url}
+`;
+  }
+
+  return `PORT=3000\n`;
 }
 
 export function gitignoreTemplate(): string {

@@ -7,6 +7,7 @@ import {
   homeControllerTemplate,
   tsconfigTemplate,
   packageJsonTemplate,
+  envTemplate,
   gitignoreTemplate,
 } from "../templates/project.js";
 
@@ -56,6 +57,7 @@ export async function init(projectName?: string): Promise<void> {
   const files: [string, string][] = [
     [join(targetDir, "package.json"), packageJsonTemplate(name, dialect)],
     [join(targetDir, "tsconfig.json"), tsconfigTemplate()],
+    [join(targetDir, ".env"), envTemplate(dialect)],
     [join(targetDir, ".gitignore"), gitignoreTemplate()],
     [join(targetDir, "src", "app.tsx"), appTemplate(dialect)],
     [join(targetDir, "src", "controllers", "home.ts"), homeControllerTemplate()],

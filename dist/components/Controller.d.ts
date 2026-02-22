@@ -6,6 +6,7 @@ export declare abstract class Controller {
     /** @internal — populated by tree compiler from Provider context */
     __context: Map<symbol, unknown>;
     protected context<T>(key: symbol): T;
+    protected config<T = Record<string, unknown>>(): T;
     get?(req: JsxpressRequest): unknown | Promise<unknown>;
     post?(req: JsxpressRequest): unknown | Promise<unknown>;
     put?(req: JsxpressRequest): unknown | Promise<unknown>;

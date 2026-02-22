@@ -8,6 +8,7 @@ import {
   homeControllerTemplate,
   packageJsonTemplate,
   tsconfigTemplate,
+  envTemplate,
   gitignoreTemplate,
 } from "../../src/cli/templates/project.js";
 
@@ -58,7 +59,7 @@ describe("appTemplate", () => {
   it("includes Database when dialect is provided", () => {
     const result = appTemplate("sqlite");
     expect(result).toContain('<Database dialect="sqlite"');
-    expect(result).toContain("import { App, Database }");
+    expect(result).toContain("import { App, Config, Database, v }");
   });
 
   it("omits Database when no dialect", () => {
@@ -70,6 +71,25 @@ describe("appTemplate", () => {
   it("omits Database when dialect is none", () => {
     const result = appTemplate("none");
     expect(result).not.toContain("Database");
+  });
+
+  it("always includes Config and v imports", () => {
+    const withDialect = appTemplate("sqlite");
+    expect(withDialect).toContain("Config");
+    expect(withDialect).toContain("v");
+
+    const withoutDialect = appTemplate();
+    expect(withoutDialect).toContain("Config");
+    expect(withoutDialect).toContain("v");
+  });
+
+  it("wraps Database inside Config when dialect provided", () => {
+    const result = appTemplate("sqlite");
+    const configIdx = result.indexOf("<Config");
+    const databaseIdx = result.indexOf("<Database");
+    const configCloseIdx = result.indexOf("</Config>");
+    expect(configIdx).toBeLessThan(databaseIdx);
+    expect(databaseIdx).toBeLessThan(configCloseIdx);
   });
 });
 
@@ -100,6 +120,29 @@ describe("tsconfigTemplate", () => {
     const result = tsconfigTemplate();
     expect(result).toContain('"react-jsx"');
     expect(result).toContain('"jsxserve"');
+  });
+});
+
+describe("envTemplate", () => {
+  it("contains PORT=3000", () => {
+    const result = envTemplate();
+    expect(result).toContain("PORT=3000");
+  });
+
+  it("includes DATABASE_URL when dialect is provided", () => {
+    const result = envTemplate("postgres");
+    expect(result).toContain("DATABASE_URL=postgres://localhost:5432/myapp");
+    expect(result).toContain("PORT=3000");
+  });
+
+  it("omits DATABASE_URL when no dialect", () => {
+    const result = envTemplate();
+    expect(result).not.toContain("DATABASE_URL");
+  });
+
+  it("omits DATABASE_URL when dialect is none", () => {
+    const result = envTemplate("none");
+    expect(result).not.toContain("DATABASE_URL");
   });
 });
 

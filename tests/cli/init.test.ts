@@ -49,6 +49,7 @@ describe("init", () => {
     expect(await exists(join(dir, "src", "controllers", "home.ts"))).toBe(true);
     expect(await exists(join(dir, "src", "models"))).toBe(true);
     expect(await exists(join(dir, "migrations"))).toBe(true);
+    expect(await exists(join(dir, ".env"))).toBe(true);
   });
 
   it("creates structure without migrations/ when none selected", async () => {
@@ -80,5 +81,20 @@ describe("init", () => {
     await init("pg-app");
     const content = await readFile(join(tmp, "pg-app", "package.json"), "utf-8");
     expect(content).toContain('"pg"');
+  });
+
+  it(".env includes DATABASE_URL when dialect selected", async () => {
+    vi.mocked(select).mockResolvedValueOnce("sqlite");
+    await init("env-app");
+    const content = await readFile(join(tmp, "env-app", ".env"), "utf-8");
+    expect(content).toContain("DATABASE_URL=./data.db");
+    expect(content).toContain("PORT=3000");
+  });
+
+  it(".env omits DATABASE_URL when none", async () => {
+    vi.mocked(select).mockResolvedValueOnce("none");
+    await init("no-db-env-app");
+    const content = await readFile(join(tmp, "no-db-env-app", ".env"), "utf-8");
+    expect(content).not.toContain("DATABASE_URL");
   });
 });

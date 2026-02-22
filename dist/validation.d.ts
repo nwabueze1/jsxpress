@@ -47,6 +47,7 @@ export declare class ArraySchema extends BaseSchema {
     max(n: number): this;
     protected _validate(value: unknown, path: string): ValidationError[];
 }
+export { BaseSchema };
 export declare const v: {
     string: () => StringSchema;
     number: () => NumberSchema;
@@ -61,5 +62,4 @@ interface ValidationFailure {
     errors: ValidationError[];
 }
 export declare function validateRequest(req: JsxpressRequest, schema: MethodSchema): Promise<ValidationSuccess | ValidationFailure>;
-export {};
 //# sourceMappingURL=validation.d.ts.map

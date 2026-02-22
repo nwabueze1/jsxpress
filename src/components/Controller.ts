@@ -1,6 +1,8 @@
 import type { JsxpressRequest } from "../types.js";
 import type { ControllerSchema } from "../validation.js";
 
+const CONFIG_KEY = Symbol.for("jsxpress.config");
+
 export abstract class Controller {
   abstract name: string;
   schema?: ControllerSchema;
@@ -13,6 +15,10 @@ export abstract class Controller {
       throw new Error(`Context not found for key: ${key.toString()}`);
     }
     return this.__context.get(key) as T;
+  }
+
+  protected config<T = Record<string, unknown>>(): T {
+    return this.context<T>(CONFIG_KEY);
   }
 
   get?(req: JsxpressRequest): unknown | Promise<unknown>;

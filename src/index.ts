@@ -12,8 +12,12 @@ export { Provider } from "./components/Provider.js";
 export { App } from "./components/App.js";
 export { Res } from "./response.js";
 export { Fragment } from "./jsx-runtime.js";
-export { v } from "./validation.js";
+export { v, BaseSchema } from "./validation.js";
 export type { ValidationError, MethodSchema, ControllerSchema } from "./validation.js";
+
+// Config
+export { Config, ConfigController, CONFIG_KEY, parseEnvFile, validateConfig } from "./config/index.js";
+export type { ConfigProps } from "./config/index.js";
 
 // Database
 export { Database, DatabaseController, Model, Field, DATABASE_KEY } from "./db/index.js";

@@ -2,7 +2,7 @@ import { join, basename } from "node:path";
 import { readdir } from "node:fs/promises";
 import { writeFileWithLog, mkdirIfNeeded } from "../utils/fs.js";
 import { ask, select, confirm } from "../utils/prompt.js";
-import { appTemplate, homeControllerTemplate, tsconfigTemplate, packageJsonTemplate, gitignoreTemplate, } from "../templates/project.js";
+import { appTemplate, homeControllerTemplate, tsconfigTemplate, packageJsonTemplate, envTemplate, gitignoreTemplate, } from "../templates/project.js";
 const green = (s) => `\x1b[32m${s}\x1b[0m`;
 async function isDirEmpty(path) {
     try {
@@ -42,6 +42,7 @@ export async function init(projectName) {
     const files = [
         [join(targetDir, "package.json"), packageJsonTemplate(name, dialect)],
         [join(targetDir, "tsconfig.json"), tsconfigTemplate()],
+        [join(targetDir, ".env"), envTemplate(dialect)],
         [join(targetDir, ".gitignore"), gitignoreTemplate()],
         [join(targetDir, "src", "app.tsx"), appTemplate(dialect)],
         [join(targetDir, "src", "controllers", "home.ts"), homeControllerTemplate()],

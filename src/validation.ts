@@ -219,6 +219,8 @@ export class ArraySchema extends BaseSchema {
   }
 }
 
+export { BaseSchema };
+
 export const v = {
   string: () => new StringSchema(),
   number: () => new NumberSchema(),
