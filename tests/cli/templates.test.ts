@@ -397,7 +397,7 @@ describe("authMiddlewareTemplate", () => {
 
   it("imports from jwt module", () => {
     const result = authMiddlewareTemplate();
-    expect(result).toContain('from "../auth/jwt.js"');
+    expect(result).toContain('from "@/auth/jwt.js"');
   });
 });
 
@@ -412,8 +412,8 @@ describe("authRegisterControllerTemplate", () => {
 
   it("imports password and jwt utilities", () => {
     const result = authRegisterControllerTemplate();
-    expect(result).toContain('from "../auth/password.js"');
-    expect(result).toContain('from "../auth/jwt.js"');
+    expect(result).toContain('from "@/auth/password.js"');
+    expect(result).toContain('from "@/auth/jwt.js"');
   });
 });
 
@@ -450,7 +450,7 @@ describe("authOAuthControllerTemplate", () => {
     expect(result).toContain("class GoogleAuth extends Controller");
     expect(result).toContain("getGoogleAuthUrl");
     expect(result).toContain("Res.redirect");
-    expect(result).toContain('from "../auth/oauth/google.js"');
+    expect(result).toContain('from "@/auth/oauth/google.js"');
   });
 
   it("generates redirect controller for github", () => {

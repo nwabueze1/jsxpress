@@ -255,7 +255,7 @@ export async function down(adapter: DatabaseAdapter): Promise<void> {
 export function authMiddlewareTemplate() {
     return `import { Middleware, type JsxpressRequest, type NextFunction } from "jsxserve";
 import { Res } from "jsxserve";
-import { verifyAccessToken } from "../auth/jwt.js";
+import { verifyAccessToken } from "@/auth/jwt.js";
 
 export class Auth extends Middleware {
   async handle(req: JsxpressRequest, next: NextFunction): Promise<Response> {
@@ -279,10 +279,10 @@ export class Auth extends Middleware {
 export function authRegisterControllerTemplate() {
     return `import { DatabaseController, type JsxpressRequest } from "jsxserve";
 import { Res, v } from "jsxserve";
-import { hashPassword } from "../auth/password.js";
-import { signAccessToken, signRefreshToken } from "../auth/jwt.js";
-import { User } from "../models/User.js";
-import { RefreshToken } from "../models/RefreshToken.js";
+import { hashPassword } from "@/auth/password.js";
+import { signAccessToken, signRefreshToken } from "@/auth/jwt.js";
+import { User } from "@/models/User.js";
+import { RefreshToken } from "@/models/RefreshToken.js";
 
 export class Register extends DatabaseController {
   name = "register";
@@ -326,10 +326,10 @@ export class Register extends DatabaseController {
 export function authLoginControllerTemplate() {
     return `import { DatabaseController, type JsxpressRequest } from "jsxserve";
 import { Res, v } from "jsxserve";
-import { verifyPassword } from "../auth/password.js";
-import { signAccessToken, signRefreshToken } from "../auth/jwt.js";
-import { User } from "../models/User.js";
-import { RefreshToken } from "../models/RefreshToken.js";
+import { verifyPassword } from "@/auth/password.js";
+import { signAccessToken, signRefreshToken } from "@/auth/jwt.js";
+import { User } from "@/models/User.js";
+import { RefreshToken } from "@/models/RefreshToken.js";
 
 export class Login extends DatabaseController {
   name = "login";
@@ -369,8 +369,8 @@ export class Login extends DatabaseController {
 export function authRefreshControllerTemplate() {
     return `import { DatabaseController, type JsxpressRequest } from "jsxserve";
 import { Res, v } from "jsxserve";
-import { signAccessToken, signRefreshToken } from "../auth/jwt.js";
-import { RefreshToken } from "../models/RefreshToken.js";
+import { signAccessToken, signRefreshToken } from "@/auth/jwt.js";
+import { RefreshToken } from "@/models/RefreshToken.js";
 
 export class Refresh extends DatabaseController {
   name = "refresh";
@@ -413,7 +413,7 @@ export class Refresh extends DatabaseController {
 export function authLogoutControllerTemplate() {
     return `import { DatabaseController, type JsxpressRequest } from "jsxserve";
 import { Res, v } from "jsxserve";
-import { RefreshToken } from "../models/RefreshToken.js";
+import { RefreshToken } from "@/models/RefreshToken.js";
 
 export class Logout extends DatabaseController {
   name = "logout";
@@ -434,7 +434,7 @@ export function authOAuthControllerTemplate(provider) {
     const name = capitalize(provider);
     return `import { Controller, type JsxpressRequest } from "jsxserve";
 import { Res } from "jsxserve";
-import { get${name}AuthUrl } from "../auth/oauth/${provider}.js";
+import { get${name}AuthUrl } from "@/auth/oauth/${provider}.js";
 
 export class ${name}Auth extends Controller {
   name = "${provider}-auth";
@@ -449,11 +449,11 @@ export function authOAuthCallbackControllerTemplate(provider) {
     const name = capitalize(provider);
     return `import { DatabaseController, type JsxpressRequest } from "jsxserve";
 import { Res } from "jsxserve";
-import { get${name}User } from "../auth/oauth/${provider}.js";
-import { signAccessToken, signRefreshToken } from "../auth/jwt.js";
-import { User } from "../models/User.js";
-import { OAuthAccount } from "../models/OAuthAccount.js";
-import { RefreshToken } from "../models/RefreshToken.js";
+import { get${name}User } from "@/auth/oauth/${provider}.js";
+import { signAccessToken, signRefreshToken } from "@/auth/jwt.js";
+import { User } from "@/models/User.js";
+import { OAuthAccount } from "@/models/OAuthAccount.js";
+import { RefreshToken } from "@/models/RefreshToken.js";
 
 export class ${name}Callback extends DatabaseController {
   name = "${provider}-callback";

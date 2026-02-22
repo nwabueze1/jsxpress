@@ -13,11 +13,11 @@ export function appTemplate(dialect, auth) {
             const imports = [
                 `import { App, Config, Database, v } from "jsxserve";`,
                 `import { serve } from "jsxserve";`,
-                `import { Home } from "./controllers/home.js";`,
-                `import { Register } from "./controllers/auth/register.js";`,
-                `import { Login } from "./controllers/auth/login.js";`,
-                `import { Refresh } from "./controllers/auth/refresh.js";`,
-                `import { Logout } from "./controllers/auth/logout.js";`,
+                `import { Home } from "@/controllers/home.js";`,
+                `import { Register } from "@/controllers/auth/register.js";`,
+                `import { Login } from "@/controllers/auth/login.js";`,
+                `import { Refresh } from "@/controllers/auth/refresh.js";`,
+                `import { Logout } from "@/controllers/auth/logout.js";`,
             ];
             const controllers = [
                 `        <Home path="/" />`,
@@ -28,8 +28,8 @@ export function appTemplate(dialect, auth) {
             ];
             for (const p of providers) {
                 const name = p.charAt(0).toUpperCase() + p.slice(1);
-                imports.push(`import { ${name}Auth } from "./controllers/auth/${p}.js";`);
-                imports.push(`import { ${name}Callback } from "./controllers/auth/${p}-callback.js";`);
+                imports.push(`import { ${name}Auth } from "@/controllers/auth/${p}.js";`);
+                imports.push(`import { ${name}Callback } from "@/controllers/auth/${p}-callback.js";`);
                 controllers.push(`        <${name}Auth path="/auth/${p}" />`);
                 controllers.push(`        <${name}Callback path="/auth/${p}/callback" />`);
             }
@@ -60,7 +60,7 @@ serve(app);
         }
         return `import { App, Config, Database, v } from "jsxserve";
 import { serve } from "jsxserve";
-import { Home } from "./controllers/home.js";
+import { Home } from "@/controllers/home.js";
 
 const app = (
   <App port={3000}>
@@ -80,7 +80,7 @@ serve(app);
     }
     return `import { App, Config, v } from "jsxserve";
 import { serve } from "jsxserve";
-import { Home } from "./controllers/home.js";
+import { Home } from "@/controllers/home.js";
 
 const app = (
   <App port={3000}>
@@ -127,7 +127,11 @@ export function tsconfigTemplate() {
     "resolveJsonModule": true,
     "isolatedModules": true,
     "jsx": "react-jsx",
-    "jsxImportSource": "jsxserve"
+    "jsxImportSource": "jsxserve",
+    "baseUrl": ".",
+    "paths": {
+      "@/*": ["./src/*"]
+    }
   },
   "include": ["src"],
   "exclude": ["node_modules", "dist"]
@@ -140,6 +144,7 @@ export function packageJsonTemplate(name, dialect, auth) {
     };
     const devDeps = {
         "@types/node": "^22.0.0",
+        "tsc-alias": "^1.8.0",
         typescript: "^5.7.0",
     };
     if (dialect && dialect !== "none") {
