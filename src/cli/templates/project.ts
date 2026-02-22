@@ -8,8 +8,8 @@ export function appTemplate(dialect?: string): string {
     };
     const url = urlMap[dialect] ?? "./data.db";
 
-    return `import { App, Database } from "jsxpress";
-import { serve } from "jsxpress";
+    return `import { App, Database } from "jsxserve";
+import { serve } from "jsxserve";
 import { Home } from "./controllers/home.js";
 
 const app = (
@@ -24,8 +24,8 @@ serve(app);
 `;
   }
 
-  return `import { App } from "jsxpress";
-import { serve } from "jsxpress";
+  return `import { App } from "jsxserve";
+import { serve } from "jsxserve";
 import { Home } from "./controllers/home.js";
 
 const app = (
@@ -39,8 +39,8 @@ serve(app);
 }
 
 export function homeControllerTemplate(): string {
-  return `import { Controller, type JsxpressRequest } from "jsxpress";
-import { Res } from "jsxpress";
+  return `import { Controller, type JsxpressRequest } from "jsxserve";
+import { Res } from "jsxserve";
 
 export class Home extends Controller {
   name = "home";
@@ -70,7 +70,7 @@ export function tsconfigTemplate(): string {
     "resolveJsonModule": true,
     "isolatedModules": true,
     "jsx": "react-jsx",
-    "jsxImportSource": "jsxpress"
+    "jsxImportSource": "jsxserve"
   },
   "include": ["src"],
   "exclude": ["node_modules", "dist"]
@@ -80,7 +80,7 @@ export function tsconfigTemplate(): string {
 
 export function packageJsonTemplate(name: string, dialect?: string): string {
   const deps: Record<string, string> = {
-    jsxpress: "latest",
+    jsxserve: "latest",
   };
 
   const devDeps: Record<string, string> = {
@@ -104,8 +104,8 @@ export function packageJsonTemplate(name: string, dialect?: string): string {
     version: "0.1.0",
     type: "module",
     scripts: {
-      dev: "npx jsxpress dev",
-      build: "npx jsxpress build",
+      dev: "npx jsxserve dev",
+      build: "npx jsxserve build",
     },
     dependencies: deps,
     devDependencies: devDeps,

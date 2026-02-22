@@ -1,12 +1,12 @@
 {
-  "name": "jsxpress",
+  "name": "jsxserve",
   "version": "0.1.0",
   "description": "JSX-based backend framework for defining HTTP routes as composable trees",
   "type": "module",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "bin": {
-    "jsxpress": "./dist/cli/index.js"
+    "jsxserve": "./dist/cli/index.js"
   },
   "exports": {
     ".": {

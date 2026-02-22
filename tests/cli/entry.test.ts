@@ -49,7 +49,7 @@ describe("CLI entry point", () => {
     await new Promise((r) => setTimeout(r, 50));
 
     const output = spy.mock.calls.map((c) => c[0]).join("\n");
-    expect(output).toContain("Usage: jsxpress");
+    expect(output).toContain("Usage: jsxserve");
     expect(output).toContain("init");
     expect(output).toContain("generate");
     expect(output).toContain("dev");
@@ -85,7 +85,7 @@ describe("CLI entry point", () => {
 
     const output = spy.mock.calls.map((c) => c[0]).join("\n");
     expect(output).toContain("Unknown command: foobar");
-    expect(output).toContain("Usage: jsxpress");
+    expect(output).toContain("Usage: jsxserve");
 
     process.argv = origArgv;
     spy.mockRestore();

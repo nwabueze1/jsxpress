@@ -16,7 +16,7 @@ describe("controllerTemplate", () => {
     const result = controllerTemplate("users");
     expect(result).toContain("class Users extends Controller");
     expect(result).toContain('name = "users"');
-    expect(result).toContain('from "jsxpress"');
+    expect(result).toContain('from "jsxserve"');
   });
 });
 
@@ -31,7 +31,7 @@ describe("modelTemplate", () => {
     expect(result).toContain("Field.serial().primaryKey()");
     expect(result).toContain("title: Field.text().notNull()");
     expect(result).toContain("views: Field.integer().notNull()");
-    expect(result).toContain('from "jsxpress"');
+    expect(result).toContain('from "jsxserve"');
   });
 });
 
@@ -99,7 +99,7 @@ describe("tsconfigTemplate", () => {
   it("includes jsx settings", () => {
     const result = tsconfigTemplate();
     expect(result).toContain('"react-jsx"');
-    expect(result).toContain('"jsxpress"');
+    expect(result).toContain('"jsxserve"');
   });
 });
 

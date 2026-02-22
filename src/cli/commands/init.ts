@@ -71,5 +71,5 @@ export async function init(projectName?: string): Promise<void> {
   console.log("Next steps:");
   console.log(`  cd ${name}`);
   console.log("  npm install");
-  console.log("  npx jsxpress dev");
+  console.log("  npx jsxserve dev");
 }

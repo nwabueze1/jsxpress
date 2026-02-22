@@ -13,7 +13,7 @@ export function modelTemplate(
     .map((f) => `    ${f.name}: Field.${f.type}().notNull(),`)
     .join("\n");
 
-  return `import { Model, Field } from "jsxpress";
+  return `import { Model, Field } from "jsxserve";
 
 export class ${className} extends Model {
   static table = "${tableName}";
