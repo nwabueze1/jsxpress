@@ -1,6 +1,6 @@
 {
   "name": "jsxserve",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "JSX-based backend framework for defining HTTP routes as composable trees",
   "type": "module",
   "main": "./dist/index.js",
@@ -51,10 +51,18 @@
     "mongodb": ">=6.0.0"
   },
   "peerDependenciesMeta": {
-    "better-sqlite3": { "optional": true },
-    "pg": { "optional": true },
-    "mysql2": { "optional": true },
-    "mongodb": { "optional": true }
+    "better-sqlite3": {
+      "optional": true
+    },
+    "pg": {
+      "optional": true
+    },
+    "mysql2": {
+      "optional": true
+    },
+    "mongodb": {
+      "optional": true
+    }
   },
   "devDependencies": {
     "@types/node": "^25.3.0",
