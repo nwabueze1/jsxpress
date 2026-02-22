@@ -114,6 +114,17 @@ describe("compileTree", () => {
     expect(table.has("/posts")).toBe(true);
   });
 
+  it("path prop overrides controller name for routing", () => {
+    const tree = jsx(App, {
+      children: jsx(Users, { path: "/" }),
+    });
+    const { table } = compileTree(tree);
+
+    expect(table.has("/")).toBe(true);
+    expect(table.has("/users")).toBe(false);
+    expect(table.get("/")!.has("GET")).toBe(true);
+  });
+
   it("supports nested controllers (children)", () => {
     class Comments extends Controller {
       name = "comments";

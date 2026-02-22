@@ -62,16 +62,16 @@ function walkNode(node, ctx, table, providers) {
     }
     if (isControllerClass(type)) {
         const instance = new type(props);
-        const name = instance.name;
+        const routePath = (typeof props.path === "string") ? props.path : instance.name;
         // Inject context values into the controller
         instance.__context = new Map(ctx.contextValues);
         // Support absolute paths (starting with "/") or relative segment appending
         let pathSegments;
-        if (name.startsWith("/")) {
-            pathSegments = name.split("/").filter(Boolean);
+        if (routePath.startsWith("/")) {
+            pathSegments = routePath.split("/").filter(Boolean);
         }
         else {
-            pathSegments = [...ctx.pathSegments, name];
+            pathSegments = [...ctx.pathSegments, routePath];
         }
         const path = buildPath(pathSegments);
         for (const method of HTTP_METHODS) {
