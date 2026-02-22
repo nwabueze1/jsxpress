@@ -1,0 +1,65 @@
+{
+  "name": "jsxpress",
+  "version": "0.1.0",
+  "description": "JSX-based backend framework for defining HTTP routes as composable trees",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "bin": {
+    "jsxpress": "./dist/cli/index.js"
+  },
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    },
+    "./cli": {
+      "types": "./dist/cli/index.d.ts",
+      "import": "./dist/cli/index.js"
+    },
+    "./jsx-runtime": {
+      "types": "./dist/jsx-runtime.d.ts",
+      "import": "./dist/jsx-runtime.js"
+    },
+    "./jsx-dev-runtime": {
+      "types": "./dist/jsx-dev-runtime.d.ts",
+      "import": "./dist/jsx-dev-runtime.js"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "typecheck": "tsc --noEmit"
+  },
+  "keywords": [
+    "jsx",
+    "http",
+    "server",
+    "framework",
+    "bun",
+    "node"
+  ],
+  "license": "MIT",
+  "peerDependencies": {
+    "better-sqlite3": ">=9.0.0",
+    "pg": ">=8.0.0",
+    "mysql2": ">=3.0.0",
+    "mongodb": ">=6.0.0"
+  },
+  "peerDependenciesMeta": {
+    "better-sqlite3": { "optional": true },
+    "pg": { "optional": true },
+    "mysql2": { "optional": true },
+    "mongodb": { "optional": true }
+  },
+  "devDependencies": {
+    "@types/node": "^25.3.0",
+    "better-sqlite3": "^11.0.0",
+    "typescript": "^5.7.0",
+    "vitest": "^3.0.0"
+  }
+}
