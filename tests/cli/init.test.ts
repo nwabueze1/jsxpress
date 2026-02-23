@@ -334,4 +334,58 @@ describe("init", () => {
     expect(content).toContain("AZURE_STORAGE_CONTAINER=");
     expect(content).toContain("AZURE_STORAGE_CONNECTION_STRING=");
   });
+
+  // ── Cache integration tests ──
+
+  it("app.tsx includes Cache when memory cache selected", async () => {
+    vi.mocked(select)
+      .mockResolvedValueOnce("sqlite")    // database
+      .mockResolvedValueOnce("none")      // storage
+      .mockResolvedValueOnce("memory");   // cache
+    await init("cache-mem-app");
+    const content = await readFile(join(tmp, "cache-mem-app", "src", "app.tsx"), "utf-8");
+    expect(content).toContain("<Cache");
+    expect(content).toContain('driver="memory"');
+  });
+
+  it("app.tsx includes Cache when redis cache selected", async () => {
+    vi.mocked(select)
+      .mockResolvedValueOnce("sqlite")    // database
+      .mockResolvedValueOnce("none")      // storage
+      .mockResolvedValueOnce("redis");    // cache
+    await init("cache-redis-app");
+    const content = await readFile(join(tmp, "cache-redis-app", "src", "app.tsx"), "utf-8");
+    expect(content).toContain("<Cache");
+    expect(content).toContain('driver="redis"');
+  });
+
+  it("package.json includes ioredis when redis cache selected", async () => {
+    vi.mocked(select)
+      .mockResolvedValueOnce("sqlite")    // database
+      .mockResolvedValueOnce("none")      // storage
+      .mockResolvedValueOnce("redis");    // cache
+    await init("cache-redis-pkg-app");
+    const content = await readFile(join(tmp, "cache-redis-pkg-app", "package.json"), "utf-8");
+    expect(content).toContain('"ioredis"');
+  });
+
+  it(".env includes REDIS_URL when redis cache selected", async () => {
+    vi.mocked(select)
+      .mockResolvedValueOnce("sqlite")    // database
+      .mockResolvedValueOnce("none")      // storage
+      .mockResolvedValueOnce("redis");    // cache
+    await init("cache-redis-env-app");
+    const content = await readFile(join(tmp, "cache-redis-env-app", ".env"), "utf-8");
+    expect(content).toContain("REDIS_URL=redis://localhost:6379");
+  });
+
+  it("app.tsx omits Cache when none cache selected", async () => {
+    vi.mocked(select)
+      .mockResolvedValueOnce("sqlite")    // database
+      .mockResolvedValueOnce("none")      // storage
+      .mockResolvedValueOnce("none");     // cache
+    await init("no-cache-app");
+    const content = await readFile(join(tmp, "no-cache-app", "src", "app.tsx"), "utf-8");
+    expect(content).not.toContain("Cache");
+  });
 });

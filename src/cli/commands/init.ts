@@ -70,6 +70,8 @@ export async function init(projectName?: string): Promise<void> {
 
   const storageDriver = await select("Select storage:", ["s3", "gcs", "azure", "none"]);
 
+  const cacheDriver = await select("Select cache:", ["memory", "redis", "none"]);
+
   const targetDir = join(process.cwd(), name);
 
   if (!(await isDirEmpty(targetDir))) {
@@ -108,11 +110,11 @@ export async function init(projectName?: string): Promise<void> {
 
   // Write files
   const files: [string, string][] = [
-    [join(targetDir, "package.json"), packageJsonTemplate(name, dialect, authEnabled, storageDriver)],
+    [join(targetDir, "package.json"), packageJsonTemplate(name, dialect, authEnabled, storageDriver, cacheDriver)],
     [join(targetDir, "tsconfig.json"), tsconfigTemplate()],
-    [join(targetDir, ".env"), envTemplate(dialect, authConfig, storageDriver)],
+    [join(targetDir, ".env"), envTemplate(dialect, authConfig, storageDriver, cacheDriver)],
     [join(targetDir, ".gitignore"), gitignoreTemplate()],
-    [join(targetDir, "src", "app.tsx"), appTemplate(dialect, authConfig, storageDriver)],
+    [join(targetDir, "src", "app.tsx"), appTemplate(dialect, authConfig, storageDriver, cacheDriver)],
     [join(targetDir, "src", "controllers", "home.ts"), homeControllerTemplate()],
   ];
 

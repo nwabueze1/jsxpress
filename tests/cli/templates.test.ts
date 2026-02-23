@@ -337,6 +337,94 @@ describe("gitignoreTemplate", () => {
   });
 });
 
+// ── Cache template tests ──
+
+describe("appTemplate with cache", () => {
+  it("includes Cache wrapper when cache is memory with database", () => {
+    const result = appTemplate("sqlite", undefined, undefined, "memory");
+    expect(result).toContain("<Cache");
+    expect(result).toContain('driver="memory"');
+    expect(result).toContain("Cache");
+  });
+
+  it("includes Cache wrapper when cache is redis with database", () => {
+    const result = appTemplate("sqlite", undefined, undefined, "redis");
+    expect(result).toContain("<Cache");
+    expect(result).toContain('driver="redis"');
+    expect(result).toContain("REDIS_URL: v.string()");
+  });
+
+  it("includes Cache wrapper when cache is memory without database", () => {
+    const result = appTemplate(undefined, undefined, undefined, "memory");
+    expect(result).toContain("<Cache");
+    expect(result).toContain("Cache");
+    expect(result).not.toContain("Database");
+  });
+
+  it("includes Cache wrapper when cache is redis without database", () => {
+    const result = appTemplate(undefined, undefined, undefined, "redis");
+    expect(result).toContain("<Cache");
+    expect(result).toContain("REDIS_URL: v.string()");
+    expect(result).not.toContain("Database");
+  });
+
+  it("omits Cache when cache is none", () => {
+    const result = appTemplate("sqlite", undefined, undefined, "none");
+    expect(result).not.toContain("Cache");
+  });
+
+  it("omits Cache when cache is undefined", () => {
+    const result = appTemplate("sqlite");
+    expect(result).not.toContain("Cache");
+  });
+
+  it("nests Storage > Cache > controllers when both enabled", () => {
+    const result = appTemplate("sqlite", undefined, "s3", "memory");
+    expect(result).toContain("<Storage>");
+    expect(result).toContain("<Cache");
+    const storageIdx = result.indexOf("<Storage>");
+    const cacheIdx = result.indexOf("<Cache");
+    const cacheCloseIdx = result.indexOf("</Cache>");
+    const storageCloseIdx = result.indexOf("</Storage>");
+    expect(storageIdx).toBeLessThan(cacheIdx);
+    expect(cacheCloseIdx).toBeLessThan(storageCloseIdx);
+  });
+});
+
+describe("packageJsonTemplate with cache", () => {
+  it("includes ioredis when cache is redis", () => {
+    const result = packageJsonTemplate("my-app", "sqlite", false, undefined, "redis");
+    expect(result).toContain('"ioredis"');
+  });
+
+  it("omits ioredis when cache is memory", () => {
+    const result = packageJsonTemplate("my-app", "sqlite", false, undefined, "memory");
+    expect(result).not.toContain('"ioredis"');
+  });
+
+  it("omits ioredis when cache is none", () => {
+    const result = packageJsonTemplate("my-app", "sqlite", false, undefined, "none");
+    expect(result).not.toContain('"ioredis"');
+  });
+});
+
+describe("envTemplate with cache", () => {
+  it("includes REDIS_URL when cache is redis", () => {
+    const result = envTemplate("sqlite", undefined, undefined, "redis");
+    expect(result).toContain("REDIS_URL=redis://localhost:6379");
+  });
+
+  it("omits REDIS_URL when cache is memory", () => {
+    const result = envTemplate("sqlite", undefined, undefined, "memory");
+    expect(result).not.toContain("REDIS_URL");
+  });
+
+  it("omits REDIS_URL when cache is none", () => {
+    const result = envTemplate("sqlite", undefined, undefined, "none");
+    expect(result).not.toContain("REDIS_URL");
+  });
+});
+
 // ── Auth template tests ──
 
 describe("authJwtTemplate", () => {

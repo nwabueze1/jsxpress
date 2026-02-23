@@ -33,6 +33,12 @@ export type {
   S3AdapterConfig, GCSAdapterConfig, AzureBlobAdapterConfig,
 } from "./storage/index.js";
 
+// Cache
+export { Cache, CACHE_KEY, MemoryAdapter, RedisAdapter } from "./cache/index.js";
+export { RateLimit, MemoryRateLimitStore, CacheRateLimitStore } from "./rate-limit/index.js";
+export type { CacheAdapter, CacheProps, CacheDriver, RedisAdapterConfig } from "./cache/index.js";
+export type { RateLimitProps, RateLimitStore, RateLimitRecord } from "./rate-limit/index.js";
+
 export type { JsxpressRequest, HttpMethod, ServerHandle, NextFunction } from "./types.js";
 export type { JsxElement } from "./types.js";
 

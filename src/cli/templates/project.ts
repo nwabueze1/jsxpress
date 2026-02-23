@@ -49,9 +49,34 @@ const STORAGE_CONFIGS: Record<string, {
   },
 };
 
-export function appTemplate(dialect?: string, auth?: AuthConfig, storage?: string): string {
+const CACHE_CONFIGS: Record<string, {
+  schemaEntries: string[];
+  envBlock: string;
+  sdkDeps: Record<string, string>;
+}> = {
+  memory: {
+    schemaEntries: [],
+    envBlock: "",
+    sdkDeps: {},
+  },
+  redis: {
+    schemaEntries: ["REDIS_URL: v.string()"],
+    envBlock: "\n# Redis Cache\nREDIS_URL=redis://localhost:6379\n",
+    sdkDeps: { ioredis: "latest" },
+  },
+};
+
+export function appTemplate(dialect?: string, auth?: AuthConfig, storage?: string, cache?: string): string {
   const useStorage = storage != null && storage !== "none";
   const storageConfig = useStorage ? STORAGE_CONFIGS[storage] : null;
+  const useCache = cache != null && cache !== "none";
+  const cacheConfig = useCache ? CACHE_CONFIGS[cache] : null;
+
+  // Helper to wrap content in Cache if enabled, given a base indent level
+  function wrapWithCache(content: string, baseIndent: string): string {
+    if (!useCache) return content;
+    return `${baseIndent}<Cache driver="${cache}"${cache === "redis" ? " redisUrl={config.REDIS_URL}" : ""}>\n${content}\n${baseIndent}</Cache>`;
+  }
 
   if (dialect && dialect !== "none") {
     const urlMap: Record<string, string> = {
@@ -69,6 +94,7 @@ export function appTemplate(dialect?: string, auth?: AuthConfig, storage?: strin
 
       const jsxserveImports = ["App", "Config", "Database"];
       if (useStorage) jsxserveImports.push("Storage");
+      if (useCache) jsxserveImports.push("Cache");
       jsxserveImports.push("v");
 
       const imports = [
@@ -81,7 +107,11 @@ export function appTemplate(dialect?: string, auth?: AuthConfig, storage?: strin
         `import { Logout } from "@/controllers/auth/logout.js";`,
       ];
 
-      const indent = useStorage ? "          " : "        ";
+      // Calculate controller indent based on nesting depth
+      let depth = 4; // base: App > Config > Database
+      if (useStorage) depth++;
+      if (useCache) depth++;
+      const indent = "  ".repeat(depth);
       const controllers = [
         `${indent}<Home path="/" />`,
         `${indent}<Register path="/auth/register" />`,
@@ -108,6 +138,9 @@ export function appTemplate(dialect?: string, auth?: AuthConfig, storage?: strin
       if (storageConfig) {
         schemaEntries.push(...storageConfig.schemaEntries);
       }
+      if (cacheConfig) {
+        schemaEntries.push(...cacheConfig.schemaEntries);
+      }
       for (const p of providers) {
         const prefix = p.toUpperCase();
         schemaEntries.push(`${prefix}_CLIENT_ID: v.string()`);
@@ -116,6 +149,11 @@ export function appTemplate(dialect?: string, auth?: AuthConfig, storage?: strin
       }
 
       let innerContent = controllers.join("\n");
+      // Wrap order (innermost first): Cache, then Storage
+      if (useCache) {
+        const cacheIndent = useStorage ? "          " : "        ";
+        innerContent = wrapWithCache(innerContent, cacheIndent);
+      }
       if (useStorage) {
         innerContent = `        <Storage>\n${innerContent}\n        </Storage>`;
       }
@@ -139,20 +177,37 @@ serve(app);
 `;
     }
 
-    const dbImports = useStorage
-      ? `import { App, Config, Database, Storage, v } from "jsxserve";`
-      : `import { App, Config, Database, v } from "jsxserve";`;
+    // No auth, with database
+    const importParts = ["App", "Config", "Database"];
+    if (useStorage) importParts.push("Storage");
+    if (useCache) importParts.push("Cache");
+    importParts.push("v");
+    const dbImports = `import { ${importParts.join(", ")} } from "jsxserve";`;
 
     const schemaEntries = ["PORT: v.number()"];
     if (storageConfig) {
       schemaEntries.push(...storageConfig.schemaEntries);
     }
+    if (cacheConfig) {
+      schemaEntries.push(...cacheConfig.schemaEntries);
+    }
 
     let dbChildren: string;
+    // Build from innermost out: controller -> Cache -> Storage
+    let depth = 4; // App > Config > Database
+    if (useStorage) depth++;
+    if (useCache) depth++;
+    const controllerIndent = "  ".repeat(depth);
+    let inner = `${controllerIndent}<Home path="/" />`;
+
+    if (useCache) {
+      const cacheIndent = useStorage ? "          " : "        ";
+      inner = wrapWithCache(inner, cacheIndent);
+    }
     if (useStorage) {
-      dbChildren = `        <Storage>\n          <Home path="/" />\n        </Storage>`;
+      dbChildren = `        <Storage>\n${inner}\n        </Storage>`;
     } else {
-      dbChildren = `        <Home path="/" />`;
+      dbChildren = inner;
     }
 
     return `${dbImports}
@@ -176,20 +231,38 @@ serve(app);
 `;
   }
 
-  const noDbImports = useStorage
-    ? `import { App, Config, Storage, v } from "jsxserve";`
-    : `import { App, Config, v } from "jsxserve";`;
+  // No database
+  const noDbImportParts = ["App", "Config"];
+  if (useStorage) noDbImportParts.push("Storage");
+  if (useCache) noDbImportParts.push("Cache");
+  noDbImportParts.push("v");
+  const noDbImports = `import { ${noDbImportParts.join(", ")} } from "jsxserve";`;
 
   const schemaEntries = ["PORT: v.number()"];
   if (storageConfig) {
     schemaEntries.push(...storageConfig.schemaEntries);
   }
+  if (cacheConfig) {
+    schemaEntries.push(...cacheConfig.schemaEntries);
+  }
+
+  // Build from innermost out: controller -> Cache -> Storage
+  let depth = 3; // App > Config
+  if (useStorage) depth++;
+  if (useCache) depth++;
+  const controllerIndent = "  ".repeat(depth);
+  let configInner = `${controllerIndent}<Home path="/" />`;
+
+  if (useCache) {
+    const cacheIndent = useStorage ? "        " : "      ";
+    configInner = wrapWithCache(configInner, cacheIndent);
+  }
 
   let configChildren: string;
   if (useStorage) {
-    configChildren = `      <Storage>\n        <Home path="/" />\n      </Storage>`;
+    configChildren = `      <Storage>\n${configInner}\n      </Storage>`;
   } else {
-    configChildren = `      <Home path="/" />`;
+    configChildren = configInner;
   }
 
   return `${noDbImports}
@@ -260,6 +333,7 @@ export function packageJsonTemplate(
   dialect?: string,
   auth?: boolean,
   storage?: string,
+  cache?: string,
 ): string {
   const deps: Record<string, string> = {
     jsxserve: "latest",
@@ -291,6 +365,11 @@ export function packageJsonTemplate(
     Object.assign(deps, storageConfig.sdkDeps);
   }
 
+  const cacheConfig = cache && cache !== "none" ? CACHE_CONFIGS[cache] : null;
+  if (cacheConfig) {
+    Object.assign(deps, cacheConfig.sdkDeps);
+  }
+
   const pkg = {
     name,
     version: "0.1.0",
@@ -306,7 +385,7 @@ export function packageJsonTemplate(
   return JSON.stringify(pkg, null, 2) + "\n";
 }
 
-export function envTemplate(dialect?: string, auth?: AuthConfig, storage?: string): string {
+export function envTemplate(dialect?: string, auth?: AuthConfig, storage?: string, cache?: string): string {
   let result = "PORT=3000\n";
 
   if (dialect && dialect !== "none") {
@@ -344,6 +423,11 @@ export function envTemplate(dialect?: string, auth?: AuthConfig, storage?: strin
   const storageConfig = storage && storage !== "none" ? STORAGE_CONFIGS[storage] : null;
   if (storageConfig) {
     result += storageConfig.envBlock;
+  }
+
+  const cacheConfig = cache && cache !== "none" ? CACHE_CONFIGS[cache] : null;
+  if (cacheConfig) {
+    result += cacheConfig.envBlock;
   }
 
   return result;
