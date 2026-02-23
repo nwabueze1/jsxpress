@@ -1,6 +1,6 @@
 {
   "name": "jsxserve",
-  "version": "0.1.4",
+  "version": "0.1.5",
   "description": "JSX-based backend framework for defining HTTP routes as composable trees",
   "type": "module",
   "main": "./dist/index.js",
