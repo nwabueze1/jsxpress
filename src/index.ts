@@ -8,6 +8,7 @@ import type { ServerHandle } from "./server/types.js";
 import { parseFormData } from "./storage/form-data.js";
 
 export { Controller } from "./components/Controller.js";
+export { Service } from "./components/Service.js";
 export { Middleware } from "./components/Middleware.js";
 export { Provider } from "./components/Provider.js";
 export { App } from "./components/App.js";

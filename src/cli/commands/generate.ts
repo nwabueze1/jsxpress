@@ -4,11 +4,12 @@ import { controllerTemplate } from "../templates/controller.js";
 import { modelTemplate } from "../templates/model.js";
 import { middlewareTemplate } from "../templates/middleware.js";
 import { migrationTemplate } from "../templates/migration.js";
+import { serviceTemplate } from "../templates/service.js";
 import { nextMigrationNumber, pad } from "../utils/migration.js";
 
 const red = (s: string) => `\x1b[31m${s}\x1b[0m`;
 
-const VALID_TYPES = ["controller", "model", "middleware", "migration"];
+const VALID_TYPES = ["controller", "model", "middleware", "migration", "service"];
 
 function parseFields(args: string[]): { name: string; type: string }[] {
   return args
@@ -78,6 +79,16 @@ export async function generate(
       }
       const filePath = join(cwd, "src", "middleware", `${name}.ts`);
       await writeFileWithLog(filePath, middlewareTemplate(name), force);
+      break;
+    }
+
+    case "service": {
+      if (!(await dirExists(join(cwd, "src")))) {
+        console.log(red("Not in a jsxpress project. No src/ directory found."));
+        return;
+      }
+      const filePath = join(cwd, "src", "services", `${name}.ts`);
+      await writeFileWithLog(filePath, serviceTemplate(name), force);
       break;
     }
 

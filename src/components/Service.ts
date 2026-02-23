@@ -1,5 +1,3 @@
-import type { JsxpressRequest } from "../types.js";
-import type { ControllerSchema } from "../validation.js";
 import type { Repository } from "../db/repository.js";
 import type { DatabaseAdapter } from "../db/adapter.js";
 import { DATABASE_KEY } from "../db/database.js";
@@ -7,19 +5,14 @@ import type { StorageAdapter } from "../storage/adapter.js";
 import { STORAGE_KEY } from "../storage/storage.js";
 import type { CacheAdapter } from "../cache/adapter.js";
 import { CACHE_KEY } from "../cache/cache.js";
-import { Service } from "./Service.js";
 
 const CONFIG_KEY = Symbol.for("jsxpress.config");
 
-export abstract class Controller {
-  abstract name: string;
-  schema?: ControllerSchema;
-
-  /** @internal — populated by tree compiler from Provider context */
+export abstract class Service {
+  /** @internal — populated by Controller when instantiated via this.service() */
   __context: Map<symbol, unknown> = new Map();
 
   private __repos = new Map<Function, Repository>();
-  private __services = new Map<Function, Service>();
 
   protected context<T>(key: symbol): T {
     if (!this.__context.has(key)) {
@@ -47,21 +40,4 @@ export abstract class Controller {
     }
     return this.__repos.get(RepoClass) as T;
   }
-
-  protected service<T extends Service>(ServiceClass: new () => T): T {
-    if (!this.__services.has(ServiceClass)) {
-      const instance = new ServiceClass();
-      instance.__context = this.__context;
-      this.__services.set(ServiceClass, instance);
-    }
-    return this.__services.get(ServiceClass) as T;
-  }
-
-  get?(req: JsxpressRequest): unknown | Promise<unknown>;
-  post?(req: JsxpressRequest): unknown | Promise<unknown>;
-  put?(req: JsxpressRequest): unknown | Promise<unknown>;
-  patch?(req: JsxpressRequest): unknown | Promise<unknown>;
-  delete?(req: JsxpressRequest): unknown | Promise<unknown>;
-  head?(req: JsxpressRequest): unknown | Promise<unknown>;
-  options?(req: JsxpressRequest): unknown | Promise<unknown>;
 }
