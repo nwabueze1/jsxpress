@@ -13,6 +13,7 @@ export { Middleware } from "./components/Middleware.js";
 export { Provider } from "./components/Provider.js";
 export { App } from "./components/App.js";
 export { Res } from "./response.js";
+export { HttpError } from "./errors.js";
 export { Fragment } from "./jsx-runtime.js";
 export { v, BaseSchema } from "./validation.js";
 export type { ValidationError, MethodSchema, ControllerSchema } from "./validation.js";

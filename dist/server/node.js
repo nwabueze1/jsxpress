@@ -54,9 +54,10 @@ export class NodeAdapter {
                 const response = await handler(request);
                 await writeResponse(res, response);
             }
-            catch {
-                res.writeHead(500);
-                res.end("Internal Server Error");
+            catch (error) {
+                console.error("[jsxpress]", error);
+                res.writeHead(500, { "Content-Type": "application/json" });
+                res.end(JSON.stringify({ error: "Internal Server Error" }));
             }
         });
         return new Promise((resolve) => {

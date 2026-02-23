@@ -10,7 +10,17 @@ export class BunAdapter implements ServerAdapter {
     const server = Bun.serve({
       port,
       hostname,
-      fetch: handler,
+      async fetch(req: Request) {
+        try {
+          return await handler(req);
+        } catch (error) {
+          console.error("[jsxpress]", error);
+          return Response.json(
+            { error: "Internal Server Error" },
+            { status: 500 }
+          );
+        }
+      },
     });
 
     return {

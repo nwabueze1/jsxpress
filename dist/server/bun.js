@@ -4,7 +4,15 @@ export class BunAdapter {
         const server = Bun.serve({
             port,
             hostname,
-            fetch: handler,
+            async fetch(req) {
+                try {
+                    return await handler(req);
+                }
+                catch (error) {
+                    console.error("[jsxpress]", error);
+                    return Response.json({ error: "Internal Server Error" }, { status: 500 });
+                }
+            },
         });
         return {
             port: server.port,
