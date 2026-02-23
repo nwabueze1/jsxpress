@@ -45,12 +45,18 @@ export class FieldBuilder {
   }
 
   references(
-    target: { table: string },
-    options?: { column?: string; onDelete?: string },
+    target: string | { table: string },
+    options?: string | { column?: string; onDelete?: string },
   ): this {
-    this.def.referencesTable = target.table;
-    this.def.referencesColumn = options?.column ?? "id";
-    this.def.onDelete = options?.onDelete;
+    if (typeof target === "string") {
+      this.def.referencesTable = target;
+      this.def.referencesColumn = typeof options === "string" ? options : options?.column ?? "id";
+      this.def.onDelete = typeof options === "string" ? undefined : options?.onDelete;
+    } else {
+      this.def.referencesTable = target.table;
+      this.def.referencesColumn = typeof options === "string" ? options : options?.column ?? "id";
+      this.def.onDelete = typeof options === "string" ? undefined : options?.onDelete;
+    }
     return this;
   }
 

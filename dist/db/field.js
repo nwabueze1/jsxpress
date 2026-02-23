@@ -26,9 +26,16 @@ export class FieldBuilder {
         return this;
     }
     references(target, options) {
-        this.def.referencesTable = target.table;
-        this.def.referencesColumn = options?.column ?? "id";
-        this.def.onDelete = options?.onDelete;
+        if (typeof target === "string") {
+            this.def.referencesTable = target;
+            this.def.referencesColumn = typeof options === "string" ? options : options?.column ?? "id";
+            this.def.onDelete = typeof options === "string" ? undefined : options?.onDelete;
+        }
+        else {
+            this.def.referencesTable = target.table;
+            this.def.referencesColumn = typeof options === "string" ? options : options?.column ?? "id";
+            this.def.onDelete = typeof options === "string" ? undefined : options?.onDelete;
+        }
         return this;
     }
     /** @internal */

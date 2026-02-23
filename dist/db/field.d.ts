@@ -16,9 +16,9 @@ export declare class FieldBuilder {
     notNull(): this;
     unique(): this;
     default(value: unknown): this;
-    references(target: {
+    references(target: string | {
         table: string;
-    }, options?: {
+    }, options?: string | {
         column?: string;
         onDelete?: string;
     }): this;
