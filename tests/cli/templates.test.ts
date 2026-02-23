@@ -410,6 +410,18 @@ describe("authRegisterControllerTemplate", () => {
     expect(result).toContain("v.string().min(1)");
   });
 
+  it("uses ControllerSchema format with post.body", () => {
+    const result = authRegisterControllerTemplate();
+    expect(result).toContain("post: {");
+    expect(result).toContain("body: v.object(");
+  });
+
+  it("uses Model.query(this.db) for database operations", () => {
+    const result = authRegisterControllerTemplate();
+    expect(result).toContain("User.query(this.db)");
+    expect(result).toContain("RefreshToken.query(this.db)");
+  });
+
   it("imports password and jwt utilities", () => {
     const result = authRegisterControllerTemplate();
     expect(result).toContain('from "@/auth/password.js"');
@@ -473,6 +485,11 @@ describe("authOAuthCallbackControllerTemplate", () => {
   it("handles missing code parameter", () => {
     const result = authOAuthCallbackControllerTemplate("google");
     expect(result).toContain("Missing code parameter");
-    expect(result).toContain("status: 400");
+    expect(result).toContain(", 400)");
+  });
+
+  it("uses req.query to get code parameter", () => {
+    const result = authOAuthCallbackControllerTemplate("google");
+    expect(result).toContain('req.query.get("code")');
   });
 });

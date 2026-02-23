@@ -261,7 +261,7 @@ export class Auth extends Middleware {
   async handle(req: JsxpressRequest, next: NextFunction): Promise<Response> {
     const header = req.headers.get("authorization");
     if (!header || !header.startsWith("Bearer ")) {
-      return Res.json({ error: "Unauthorized" }, { status: 401 });
+      return Res.json({ error: "Unauthorized" }, 401);
     }
 
     try {
@@ -270,7 +270,7 @@ export class Auth extends Middleware {
       (req as any).userId = userId;
       return next();
     } catch {
-      return Res.json({ error: "Invalid token" }, { status: 401 });
+      return Res.json({ error: "Invalid token" }, 401);
     }
   }
 }
@@ -287,22 +287,26 @@ import { RefreshToken } from "@/models/RefreshToken.js";
 export class Register extends DatabaseController {
   name = "register";
 
-  schema = v.object({
-    email: v.string().email(),
-    password: v.string().min(8),
-    name: v.string().min(1),
-  });
+  schema = {
+    post: {
+      body: v.object({
+        email: v.string().email(),
+        password: v.string().min(8),
+        name: v.string().min(1),
+      }),
+    },
+  };
 
   async post(req: JsxpressRequest) {
-    const body = await this.validate(req);
+    const body = req.body as { email: string; password: string; name: string };
 
-    const existing = await this.db.findOne(User, { email: body.email });
+    const existing = await User.query(this.db).where("email", body.email).findOne();
     if (existing) {
-      return Res.json({ error: "Email already registered" }, { status: 409 });
+      return Res.json({ error: "Email already registered" }, 409);
     }
 
     const passwordHash = await hashPassword(body.password);
-    const user = await this.db.create(User, {
+    const user = await User.query(this.db).create({
       email: body.email,
       password_hash: passwordHash,
       name: body.name,
@@ -312,13 +316,13 @@ export class Register extends DatabaseController {
     const accessToken = await signAccessToken(String(user.id));
     const refreshToken = await signRefreshToken(String(user.id));
 
-    await this.db.create(RefreshToken, {
+    await RefreshToken.query(this.db).create({
       user_id: user.id,
       token: refreshToken,
       expires_at: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
     });
 
-    return Res.json({ accessToken, refreshToken }, { status: 201 });
+    return Res.json({ accessToken, refreshToken }, 201);
   }
 }
 `;
@@ -334,28 +338,32 @@ import { RefreshToken } from "@/models/RefreshToken.js";
 export class Login extends DatabaseController {
   name = "login";
 
-  schema = v.object({
-    email: v.string().email(),
-    password: v.string().min(1),
-  });
+  schema = {
+    post: {
+      body: v.object({
+        email: v.string().email(),
+        password: v.string().min(1),
+      }),
+    },
+  };
 
   async post(req: JsxpressRequest) {
-    const body = await this.validate(req);
+    const body = req.body as { email: string; password: string };
 
-    const user = await this.db.findOne(User, { email: body.email });
+    const user = await User.query(this.db).where("email", body.email).findOne();
     if (!user || !user.password_hash) {
-      return Res.json({ error: "Invalid credentials" }, { status: 401 });
+      return Res.json({ error: "Invalid credentials" }, 401);
     }
 
     const valid = await verifyPassword(user.password_hash as string, body.password);
     if (!valid) {
-      return Res.json({ error: "Invalid credentials" }, { status: 401 });
+      return Res.json({ error: "Invalid credentials" }, 401);
     }
 
     const accessToken = await signAccessToken(String(user.id));
     const refreshToken = await signRefreshToken(String(user.id));
 
-    await this.db.create(RefreshToken, {
+    await RefreshToken.query(this.db).create({
       user_id: user.id,
       token: refreshToken,
       expires_at: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
@@ -375,31 +383,35 @@ import { RefreshToken } from "@/models/RefreshToken.js";
 export class Refresh extends DatabaseController {
   name = "refresh";
 
-  schema = v.object({
-    refreshToken: v.string().min(1),
-  });
+  schema = {
+    post: {
+      body: v.object({
+        refreshToken: v.string().min(1),
+      }),
+    },
+  };
 
   async post(req: JsxpressRequest) {
-    const body = await this.validate(req);
+    const body = req.body as { refreshToken: string };
 
-    const stored = await this.db.findOne(RefreshToken, { token: body.refreshToken });
+    const stored = await RefreshToken.query(this.db).where("token", body.refreshToken).findOne();
     if (!stored) {
-      return Res.json({ error: "Invalid refresh token" }, { status: 401 });
+      return Res.json({ error: "Invalid refresh token" }, 401);
     }
 
     if (new Date(stored.expires_at as string) < new Date()) {
-      await this.db.delete(RefreshToken, { id: stored.id });
-      return Res.json({ error: "Refresh token expired" }, { status: 401 });
+      await RefreshToken.query(this.db).where("id", stored.id).delete();
+      return Res.json({ error: "Refresh token expired" }, 401);
     }
 
     // Token rotation: delete old, issue new pair
-    await this.db.delete(RefreshToken, { id: stored.id });
+    await RefreshToken.query(this.db).where("id", stored.id).delete();
 
     const userId = String(stored.user_id);
     const accessToken = await signAccessToken(userId);
     const refreshToken = await signRefreshToken(userId);
 
-    await this.db.create(RefreshToken, {
+    await RefreshToken.query(this.db).create({
       user_id: stored.user_id,
       token: refreshToken,
       expires_at: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
@@ -418,13 +430,17 @@ import { RefreshToken } from "@/models/RefreshToken.js";
 export class Logout extends DatabaseController {
   name = "logout";
 
-  schema = v.object({
-    refreshToken: v.string().min(1),
-  });
+  schema = {
+    post: {
+      body: v.object({
+        refreshToken: v.string().min(1),
+      }),
+    },
+  };
 
   async post(req: JsxpressRequest) {
-    const body = await this.validate(req);
-    await this.db.delete(RefreshToken, { token: body.refreshToken });
+    const body = req.body as { refreshToken: string };
+    await RefreshToken.query(this.db).where("token", body.refreshToken).delete();
     return Res.noContent();
   }
 }
@@ -459,19 +475,18 @@ export class ${name}Callback extends DatabaseController {
   name = "${provider}-callback";
 
   async get(req: JsxpressRequest) {
-    const url = new URL(req.url);
-    const code = url.searchParams.get("code");
+    const code = req.query.get("code");
     if (!code) {
-      return Res.json({ error: "Missing code parameter" }, { status: 400 });
+      return Res.json({ error: "Missing code parameter" }, 400);
     }
 
     const providerUser = await get${name}User(code);
 
     // Check if OAuth account already linked
-    let oauthAccount = await this.db.findOne(OAuthAccount, {
-      provider: "${provider}",
-      provider_user_id: providerUser.id,
-    });
+    const oauthAccount = await OAuthAccount.query(this.db)
+      .where("provider", "${provider}")
+      .where("provider_user_id", providerUser.id)
+      .findOne();
 
     let userId: number;
 
@@ -479,10 +494,10 @@ export class ${name}Callback extends DatabaseController {
       userId = oauthAccount.user_id as number;
     } else {
       // Check if user exists with same email
-      let user = await this.db.findOne(User, { email: providerUser.email });
+      let user = await User.query(this.db).where("email", providerUser.email).findOne();
 
       if (!user) {
-        user = await this.db.create(User, {
+        user = await User.query(this.db).create({
           email: providerUser.email,
           name: providerUser.name,
           created_at: new Date().toISOString(),
@@ -491,7 +506,7 @@ export class ${name}Callback extends DatabaseController {
 
       userId = user.id as number;
 
-      await this.db.create(OAuthAccount, {
+      await OAuthAccount.query(this.db).create({
         user_id: userId,
         provider: "${provider}",
         provider_user_id: providerUser.id,
@@ -502,7 +517,7 @@ export class ${name}Callback extends DatabaseController {
     const accessToken = await signAccessToken(String(userId));
     const refreshToken = await signRefreshToken(String(userId));
 
-    await this.db.create(RefreshToken, {
+    await RefreshToken.query(this.db).create({
       user_id: userId,
       token: refreshToken,
       expires_at: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
