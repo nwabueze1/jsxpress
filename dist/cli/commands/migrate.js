@@ -20,6 +20,10 @@ export async function migrate(subcommand, args = []) {
         console.log(red("Missing DB_DIALECT or DB_URL environment variables."));
         return;
     }
+    if (dialect === "mongodb") {
+        console.log(red("Migrations are not supported for MongoDB."));
+        return;
+    }
     const adapter = createDatabaseAdapter(dialect, url);
     try {
         await adapter.connect();

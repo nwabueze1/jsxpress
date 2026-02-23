@@ -27,6 +27,11 @@ export async function migrate(subcommand: string, args: string[] = []): Promise<
     return;
   }
 
+  if (dialect === "mongodb") {
+    console.log(red("Migrations are not supported for MongoDB."));
+    return;
+  }
+
   const adapter = createDatabaseAdapter(dialect, url);
 
   try {

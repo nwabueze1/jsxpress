@@ -248,6 +248,31 @@ describe("packageJsonTemplate", () => {
     const result = packageJsonTemplate("my-app", "sqlite", false, "azure");
     expect(result).toContain('"@azure/storage-blob"');
   });
+
+  it("includes migration scripts for SQL dialects", () => {
+    const result = packageJsonTemplate("my-app", "sqlite");
+    expect(result).toContain('"migrate"');
+    expect(result).toContain('"migrate:down"');
+    expect(result).toContain('"migrate:status"');
+    expect(result).toContain('"migrate:generate"');
+    expect(result).toContain('"migrate:diff"');
+  });
+
+  it("omits migration scripts for mongodb", () => {
+    const result = packageJsonTemplate("my-app", "mongodb");
+    expect(result).not.toContain('"migrate"');
+    expect(result).not.toContain('"migrate:down"');
+  });
+
+  it("omits migration scripts when no dialect", () => {
+    const result = packageJsonTemplate("my-app");
+    expect(result).not.toContain('"migrate"');
+  });
+
+  it("omits migration scripts for none dialect", () => {
+    const result = packageJsonTemplate("my-app", "none");
+    expect(result).not.toContain('"migrate"');
+  });
 });
 
 describe("tsconfigTemplate", () => {

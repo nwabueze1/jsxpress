@@ -370,14 +370,24 @@ export function packageJsonTemplate(
     Object.assign(deps, cacheConfig.sdkDeps);
   }
 
+  const scripts: Record<string, string> = {
+    dev: "npx jsxserve dev",
+    build: "npx jsxserve build",
+  };
+
+  if (dialect && dialect !== "none" && dialect !== "mongodb") {
+    scripts["migrate"] = "npx jsxserve migrate up";
+    scripts["migrate:down"] = "npx jsxserve migrate down";
+    scripts["migrate:status"] = "npx jsxserve migrate status";
+    scripts["migrate:generate"] = "npx jsxserve migrate generate";
+    scripts["migrate:diff"] = "npx jsxserve migrate diff";
+  }
+
   const pkg = {
     name,
     version: "0.1.0",
     type: "module",
-    scripts: {
-      dev: "npx jsxserve dev",
-      build: "npx jsxserve build",
-    },
+    scripts,
     dependencies: deps,
     devDependencies: devDeps,
   };
