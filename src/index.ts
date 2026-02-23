@@ -5,6 +5,7 @@ import { Router } from "./router.js";
 import { executeChain } from "./middleware.js";
 import { createAdapter } from "./server/index.js";
 import type { ServerHandle } from "./server/types.js";
+import { parseFormData } from "./storage/form-data.js";
 
 export { Controller } from "./components/Controller.js";
 export { Middleware } from "./components/Middleware.js";
@@ -24,6 +25,14 @@ export { Database, Repository, Model, Field, DATABASE_KEY } from "./db/index.js"
 export { QueryBuilder, MigrationRunner, hasMany, hasOne, belongsTo } from "./db/index.js";
 export type { Dialect, DatabaseAdapter, QueryResult, DatabaseProps, Migration, MigrationRecord, RelationDefinition, OnDelete } from "./db/index.js";
 
+// Storage
+export { Storage, STORAGE_KEY, FileUpload, parseFormData, S3Adapter, GCSAdapter, AzureBlobAdapter } from "./storage/index.js";
+export type {
+  StorageAdapter, StorageProps, StorageDriver, StorageResult, StorageObject,
+  PutOptions, UrlOptions, FileUploadProps, ParsedFormData, UploadedFile,
+  S3AdapterConfig, GCSAdapterConfig, AzureBlobAdapterConfig,
+} from "./storage/index.js";
+
 export type { JsxpressRequest, HttpMethod, ServerHandle, NextFunction } from "./types.js";
 export type { JsxElement } from "./types.js";
 
@@ -38,6 +47,7 @@ function createJsxpressRequest(raw: Request): JsxpressRequest {
     headers: raw.headers,
     json: () => raw.json(),
     text: () => raw.text(),
+    formData: () => parseFormData(raw),
   };
 }
 

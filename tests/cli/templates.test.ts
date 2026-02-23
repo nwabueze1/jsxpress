@@ -148,6 +148,58 @@ describe("appTemplate", () => {
     expect(result).toContain("GOOGLE_CLIENT_SECRET: v.string()");
     expect(result).toContain("GOOGLE_REDIRECT_URI: v.string()");
   });
+
+  it("includes Storage wrapper when storage is s3 with database", () => {
+    const result = appTemplate("sqlite", undefined, "s3");
+    expect(result).toContain("<Storage>");
+    expect(result).toContain("import { App, Config, Database, Storage, v }");
+    expect(result).toContain("S3_BUCKET: v.string()");
+    expect(result).toContain("S3_REGION: v.string()");
+    expect(result).toContain("S3_ENDPOINT: v.string()");
+    expect(result).toContain("AWS_ACCESS_KEY_ID: v.string()");
+    expect(result).toContain("AWS_SECRET_ACCESS_KEY: v.string()");
+  });
+
+  it("includes Storage wrapper when storage is s3 without database", () => {
+    const result = appTemplate(undefined, undefined, "s3");
+    expect(result).toContain("<Storage>");
+    expect(result).toContain("import { App, Config, Storage, v }");
+    expect(result).not.toContain("Database");
+    expect(result).toContain("S3_BUCKET: v.string()");
+  });
+
+  it("includes Storage wrapper when storage is gcs with database", () => {
+    const result = appTemplate("sqlite", undefined, "gcs");
+    expect(result).toContain("<Storage>");
+    expect(result).toContain("import { App, Config, Database, Storage, v }");
+    expect(result).toContain("GCS_BUCKET: v.string()");
+    expect(result).toContain("GCS_PROJECT_ID: v.string()");
+    expect(result).toContain("GOOGLE_APPLICATION_CREDENTIALS: v.string()");
+  });
+
+  it("includes Storage wrapper when storage is gcs without database", () => {
+    const result = appTemplate(undefined, undefined, "gcs");
+    expect(result).toContain("<Storage>");
+    expect(result).toContain("import { App, Config, Storage, v }");
+    expect(result).not.toContain("Database");
+    expect(result).toContain("GCS_BUCKET: v.string()");
+  });
+
+  it("includes Storage wrapper when storage is azure with database", () => {
+    const result = appTemplate("sqlite", undefined, "azure");
+    expect(result).toContain("<Storage>");
+    expect(result).toContain("import { App, Config, Database, Storage, v }");
+    expect(result).toContain("AZURE_STORAGE_CONTAINER: v.string()");
+    expect(result).toContain("AZURE_STORAGE_CONNECTION_STRING: v.string()");
+  });
+
+  it("includes Storage wrapper when storage is azure without database", () => {
+    const result = appTemplate(undefined, undefined, "azure");
+    expect(result).toContain("<Storage>");
+    expect(result).toContain("import { App, Config, Storage, v }");
+    expect(result).not.toContain("Database");
+    expect(result).toContain("AZURE_STORAGE_CONTAINER: v.string()");
+  });
 });
 
 describe("homeControllerTemplate", () => {
@@ -179,6 +231,22 @@ describe("packageJsonTemplate", () => {
   it("omits jose when auth not enabled", () => {
     const result = packageJsonTemplate("my-app", "sqlite");
     expect(result).not.toContain('"jose"');
+  });
+
+  it("includes AWS SDK deps when storage is s3", () => {
+    const result = packageJsonTemplate("my-app", "sqlite", false, "s3");
+    expect(result).toContain('"@aws-sdk/client-s3"');
+    expect(result).toContain('"@aws-sdk/s3-request-presigner"');
+  });
+
+  it("includes GCS SDK dep when storage is gcs", () => {
+    const result = packageJsonTemplate("my-app", "sqlite", false, "gcs");
+    expect(result).toContain('"@google-cloud/storage"');
+  });
+
+  it("includes Azure SDK dep when storage is azure", () => {
+    const result = packageJsonTemplate("my-app", "sqlite", false, "azure");
+    expect(result).toContain('"@azure/storage-blob"');
   });
 });
 
@@ -212,6 +280,15 @@ describe("envTemplate", () => {
     expect(result).not.toContain("DATABASE_URL");
   });
 
+  it("includes S3 env vars when storage is s3", () => {
+    const result = envTemplate("sqlite", undefined, "s3");
+    expect(result).toContain("S3_BUCKET=my-bucket");
+    expect(result).toContain("S3_REGION=us-east-1");
+    expect(result).toContain("S3_ENDPOINT=");
+    expect(result).toContain("AWS_ACCESS_KEY_ID=your-access-key-id");
+    expect(result).toContain("AWS_SECRET_ACCESS_KEY=your-secret-access-key");
+  });
+
   it("includes JWT_SECRET when auth enabled", () => {
     const result = envTemplate("sqlite", { enabled: true });
     expect(result).toContain("JWT_SECRET=");
@@ -236,6 +313,19 @@ describe("envTemplate", () => {
     const match = result.match(/JWT_SECRET=([a-f0-9]+)/);
     expect(match).not.toBeNull();
     expect(match![1]).toHaveLength(64);
+  });
+
+  it("includes GCS env vars when storage is gcs", () => {
+    const result = envTemplate("sqlite", undefined, "gcs");
+    expect(result).toContain("GCS_BUCKET=my-bucket");
+    expect(result).toContain("GCS_PROJECT_ID=my-project");
+    expect(result).toContain("GOOGLE_APPLICATION_CREDENTIALS=path/to/service-account.json");
+  });
+
+  it("includes Azure env vars when storage is azure", () => {
+    const result = envTemplate("sqlite", undefined, "azure");
+    expect(result).toContain("AZURE_STORAGE_CONTAINER=my-container");
+    expect(result).toContain("AZURE_STORAGE_CONNECTION_STRING=");
   });
 });
 

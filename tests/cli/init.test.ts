@@ -6,7 +6,7 @@ import { tmpdir } from "node:os";
 // Mock prompts so init doesn't block on stdin
 vi.mock("../../src/cli/utils/prompt.js", () => ({
   ask: vi.fn().mockResolvedValue("test-project"),
-  select: vi.fn().mockResolvedValue("sqlite"),
+  select: vi.fn().mockResolvedValue("none"),
   confirm: vi.fn().mockResolvedValue(false),
 }));
 
@@ -39,6 +39,7 @@ describe("init", () => {
   });
 
   it("creates correct directory structure with sqlite", async () => {
+    vi.mocked(select).mockResolvedValueOnce("sqlite");
     await init("my-app");
     const dir = join(tmp, "my-app");
 
@@ -225,5 +226,112 @@ describe("init", () => {
     expect(content).toContain("GoogleAuth");
     expect(content).toContain("GoogleCallback");
     expect(content).toContain('path="/auth/register"');
+  });
+
+  // ── Storage integration tests ──
+
+  it("app.tsx includes Storage wrapper when s3 selected", async () => {
+    vi.mocked(select)
+      .mockResolvedValueOnce("sqlite")
+      .mockResolvedValueOnce("s3");
+    await init("s3-app");
+    const content = await readFile(join(tmp, "s3-app", "src", "app.tsx"), "utf-8");
+    expect(content).toContain("<Storage");
+    expect(content).toContain("Storage");
+  });
+
+  it("package.json includes AWS SDK deps when s3 selected", async () => {
+    vi.mocked(select)
+      .mockResolvedValueOnce("sqlite")
+      .mockResolvedValueOnce("s3");
+    await init("s3-pkg-app");
+    const content = await readFile(join(tmp, "s3-pkg-app", "package.json"), "utf-8");
+    expect(content).toContain('"@aws-sdk/client-s3"');
+    expect(content).toContain('"@aws-sdk/s3-request-presigner"');
+  });
+
+  it(".env includes S3 vars when s3 selected", async () => {
+    vi.mocked(select)
+      .mockResolvedValueOnce("sqlite")
+      .mockResolvedValueOnce("s3");
+    await init("s3-env-app");
+    const content = await readFile(join(tmp, "s3-env-app", ".env"), "utf-8");
+    expect(content).toContain("S3_BUCKET=");
+    expect(content).toContain("S3_REGION=");
+    expect(content).toContain("S3_ENDPOINT=");
+    expect(content).toContain("AWS_ACCESS_KEY_ID=");
+    expect(content).toContain("AWS_SECRET_ACCESS_KEY=");
+  });
+
+  it("app.tsx omits Storage when none selected", async () => {
+    vi.mocked(select)
+      .mockResolvedValueOnce("sqlite")
+      .mockResolvedValueOnce("none");
+    await init("no-storage-app");
+    const content = await readFile(join(tmp, "no-storage-app", "src", "app.tsx"), "utf-8");
+    expect(content).not.toContain("Storage");
+  });
+
+  // ── GCS integration tests ──
+
+  it("app.tsx includes Storage wrapper when gcs selected", async () => {
+    vi.mocked(select)
+      .mockResolvedValueOnce("sqlite")
+      .mockResolvedValueOnce("gcs");
+    await init("gcs-app");
+    const content = await readFile(join(tmp, "gcs-app", "src", "app.tsx"), "utf-8");
+    expect(content).toContain("<Storage");
+    expect(content).toContain("Storage");
+  });
+
+  it("package.json includes GCS SDK dep when gcs selected", async () => {
+    vi.mocked(select)
+      .mockResolvedValueOnce("sqlite")
+      .mockResolvedValueOnce("gcs");
+    await init("gcs-pkg-app");
+    const content = await readFile(join(tmp, "gcs-pkg-app", "package.json"), "utf-8");
+    expect(content).toContain('"@google-cloud/storage"');
+  });
+
+  it(".env includes GCS vars when gcs selected", async () => {
+    vi.mocked(select)
+      .mockResolvedValueOnce("sqlite")
+      .mockResolvedValueOnce("gcs");
+    await init("gcs-env-app");
+    const content = await readFile(join(tmp, "gcs-env-app", ".env"), "utf-8");
+    expect(content).toContain("GCS_BUCKET=");
+    expect(content).toContain("GCS_PROJECT_ID=");
+    expect(content).toContain("GOOGLE_APPLICATION_CREDENTIALS=");
+  });
+
+  // ── Azure integration tests ──
+
+  it("app.tsx includes Storage wrapper when azure selected", async () => {
+    vi.mocked(select)
+      .mockResolvedValueOnce("sqlite")
+      .mockResolvedValueOnce("azure");
+    await init("azure-app");
+    const content = await readFile(join(tmp, "azure-app", "src", "app.tsx"), "utf-8");
+    expect(content).toContain("<Storage");
+    expect(content).toContain("Storage");
+  });
+
+  it("package.json includes Azure SDK dep when azure selected", async () => {
+    vi.mocked(select)
+      .mockResolvedValueOnce("sqlite")
+      .mockResolvedValueOnce("azure");
+    await init("azure-pkg-app");
+    const content = await readFile(join(tmp, "azure-pkg-app", "package.json"), "utf-8");
+    expect(content).toContain('"@azure/storage-blob"');
+  });
+
+  it(".env includes Azure vars when azure selected", async () => {
+    vi.mocked(select)
+      .mockResolvedValueOnce("sqlite")
+      .mockResolvedValueOnce("azure");
+    await init("azure-env-app");
+    const content = await readFile(join(tmp, "azure-env-app", ".env"), "utf-8");
+    expect(content).toContain("AZURE_STORAGE_CONTAINER=");
+    expect(content).toContain("AZURE_STORAGE_CONNECTION_STRING=");
   });
 });

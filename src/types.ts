@@ -35,8 +35,11 @@ export interface JsxpressRequest {
   query: URLSearchParams;
   headers: Headers;
   body?: unknown;
+  files?: import("./storage/form-data.js").UploadedFile[];
+  fields?: Record<string, string>;
   json(): Promise<unknown>;
   text(): Promise<string>;
+  formData(): Promise<import("./storage/form-data.js").ParsedFormData>;
 }
 
 export type NextFunction = () => Promise<Response>;

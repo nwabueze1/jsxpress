@@ -7,7 +7,52 @@ export interface AuthConfig {
   github?: boolean;
 }
 
-export function appTemplate(dialect?: string, auth?: AuthConfig): string {
+const STORAGE_CONFIGS: Record<string, {
+  schemaEntries: string[];
+  envBlock: string;
+  sdkDeps: Record<string, string>;
+}> = {
+  s3: {
+    schemaEntries: [
+      "S3_BUCKET: v.string()",
+      "S3_REGION: v.string()",
+      "S3_ENDPOINT: v.string()",
+      "AWS_ACCESS_KEY_ID: v.string()",
+      "AWS_SECRET_ACCESS_KEY: v.string()",
+    ],
+    envBlock: "\n# S3 Storage\nS3_BUCKET=my-bucket\nS3_REGION=us-east-1\nS3_ENDPOINT=\nAWS_ACCESS_KEY_ID=your-access-key-id\nAWS_SECRET_ACCESS_KEY=your-secret-access-key\n",
+    sdkDeps: {
+      "@aws-sdk/client-s3": "latest",
+      "@aws-sdk/s3-request-presigner": "latest",
+    },
+  },
+  gcs: {
+    schemaEntries: [
+      "GCS_BUCKET: v.string()",
+      "GCS_PROJECT_ID: v.string()",
+      "GOOGLE_APPLICATION_CREDENTIALS: v.string()",
+    ],
+    envBlock: "\n# Google Cloud Storage\nGCS_BUCKET=my-bucket\nGCS_PROJECT_ID=my-project\nGOOGLE_APPLICATION_CREDENTIALS=path/to/service-account.json\n",
+    sdkDeps: {
+      "@google-cloud/storage": "latest",
+    },
+  },
+  azure: {
+    schemaEntries: [
+      "AZURE_STORAGE_CONTAINER: v.string()",
+      "AZURE_STORAGE_CONNECTION_STRING: v.string()",
+    ],
+    envBlock: "\n# Azure Blob Storage\nAZURE_STORAGE_CONTAINER=my-container\nAZURE_STORAGE_CONNECTION_STRING=DefaultEndpointsProtocol=https;AccountName=...;AccountKey=...;EndpointSuffix=core.windows.net\n",
+    sdkDeps: {
+      "@azure/storage-blob": "latest",
+    },
+  },
+};
+
+export function appTemplate(dialect?: string, auth?: AuthConfig, storage?: string): string {
+  const useStorage = storage != null && storage !== "none";
+  const storageConfig = useStorage ? STORAGE_CONFIGS[storage] : null;
+
   if (dialect && dialect !== "none") {
     const urlMap: Record<string, string> = {
       sqlite: "./data.db",
@@ -22,8 +67,12 @@ export function appTemplate(dialect?: string, auth?: AuthConfig): string {
         (p) => auth[p],
       );
 
+      const jsxserveImports = ["App", "Config", "Database"];
+      if (useStorage) jsxserveImports.push("Storage");
+      jsxserveImports.push("v");
+
       const imports = [
-        `import { App, Config, Database, v } from "jsxserve";`,
+        `import { ${jsxserveImports.join(", ")} } from "jsxserve";`,
         `import { serve } from "jsxserve";`,
         `import { Home } from "@/controllers/home.js";`,
         `import { Register } from "@/controllers/auth/register.js";`,
@@ -32,12 +81,13 @@ export function appTemplate(dialect?: string, auth?: AuthConfig): string {
         `import { Logout } from "@/controllers/auth/logout.js";`,
       ];
 
+      const indent = useStorage ? "          " : "        ";
       const controllers = [
-        `        <Home path="/" />`,
-        `        <Register path="/auth/register" />`,
-        `        <Login path="/auth/login" />`,
-        `        <Refresh path="/auth/refresh" />`,
-        `        <Logout path="/auth/logout" />`,
+        `${indent}<Home path="/" />`,
+        `${indent}<Register path="/auth/register" />`,
+        `${indent}<Login path="/auth/login" />`,
+        `${indent}<Refresh path="/auth/refresh" />`,
+        `${indent}<Logout path="/auth/logout" />`,
       ];
 
       for (const p of providers) {
@@ -48,18 +98,26 @@ export function appTemplate(dialect?: string, auth?: AuthConfig): string {
         imports.push(
           `import { ${name}Callback } from "@/controllers/auth/${p}-callback.js";`,
         );
-        controllers.push(`        <${name}Auth path="/auth/${p}" />`);
+        controllers.push(`${indent}<${name}Auth path="/auth/${p}" />`);
         controllers.push(
-          `        <${name}Callback path="/auth/${p}/callback" />`,
+          `${indent}<${name}Callback path="/auth/${p}/callback" />`,
         );
       }
 
       const schemaEntries = ["PORT: v.number()", "JWT_SECRET: v.string()"];
+      if (storageConfig) {
+        schemaEntries.push(...storageConfig.schemaEntries);
+      }
       for (const p of providers) {
         const prefix = p.toUpperCase();
         schemaEntries.push(`${prefix}_CLIENT_ID: v.string()`);
         schemaEntries.push(`${prefix}_CLIENT_SECRET: v.string()`);
         schemaEntries.push(`${prefix}_REDIRECT_URI: v.string()`);
+      }
+
+      let innerContent = controllers.join("\n");
+      if (useStorage) {
+        innerContent = `        <Storage>\n${innerContent}\n        </Storage>`;
       }
 
       return `${imports.join("\n")}
@@ -71,7 +129,7 @@ const app = (
       env=".env"
     >
       <Database dialect="${dialect}" url="${url}">
-${controllers.join("\n")}
+${innerContent}
       </Database>
     </Config>
   </App>
@@ -81,18 +139,34 @@ serve(app);
 `;
     }
 
-    return `import { App, Config, Database, v } from "jsxserve";
+    const dbImports = useStorage
+      ? `import { App, Config, Database, Storage, v } from "jsxserve";`
+      : `import { App, Config, Database, v } from "jsxserve";`;
+
+    const schemaEntries = ["PORT: v.number()"];
+    if (storageConfig) {
+      schemaEntries.push(...storageConfig.schemaEntries);
+    }
+
+    let dbChildren: string;
+    if (useStorage) {
+      dbChildren = `        <Storage>\n          <Home path="/" />\n        </Storage>`;
+    } else {
+      dbChildren = `        <Home path="/" />`;
+    }
+
+    return `${dbImports}
 import { serve } from "jsxserve";
 import { Home } from "@/controllers/home.js";
 
 const app = (
   <App port={3000}>
     <Config
-      schema={{ PORT: v.number() }}
+      schema={{ ${schemaEntries.join(", ")} }}
       env=".env"
     >
       <Database dialect="${dialect}" url="${url}">
-        <Home path="/" />
+${dbChildren}
       </Database>
     </Config>
   </App>
@@ -102,17 +176,33 @@ serve(app);
 `;
   }
 
-  return `import { App, Config, v } from "jsxserve";
+  const noDbImports = useStorage
+    ? `import { App, Config, Storage, v } from "jsxserve";`
+    : `import { App, Config, v } from "jsxserve";`;
+
+  const schemaEntries = ["PORT: v.number()"];
+  if (storageConfig) {
+    schemaEntries.push(...storageConfig.schemaEntries);
+  }
+
+  let configChildren: string;
+  if (useStorage) {
+    configChildren = `      <Storage>\n        <Home path="/" />\n      </Storage>`;
+  } else {
+    configChildren = `      <Home path="/" />`;
+  }
+
+  return `${noDbImports}
 import { serve } from "jsxserve";
 import { Home } from "@/controllers/home.js";
 
 const app = (
   <App port={3000}>
     <Config
-      schema={{ PORT: v.number() }}
+      schema={{ ${schemaEntries.join(", ")} }}
       env=".env"
     >
-      <Home path="/" />
+${configChildren}
     </Config>
   </App>
 );
@@ -169,6 +259,7 @@ export function packageJsonTemplate(
   name: string,
   dialect?: string,
   auth?: boolean,
+  storage?: string,
 ): string {
   const deps: Record<string, string> = {
     jsxserve: "latest",
@@ -195,6 +286,11 @@ export function packageJsonTemplate(
     deps["jose"] = "latest";
   }
 
+  const storageConfig = storage && storage !== "none" ? STORAGE_CONFIGS[storage] : null;
+  if (storageConfig) {
+    Object.assign(deps, storageConfig.sdkDeps);
+  }
+
   const pkg = {
     name,
     version: "0.1.0",
@@ -210,7 +306,7 @@ export function packageJsonTemplate(
   return JSON.stringify(pkg, null, 2) + "\n";
 }
 
-export function envTemplate(dialect?: string, auth?: AuthConfig): string {
+export function envTemplate(dialect?: string, auth?: AuthConfig, storage?: string): string {
   let result = "PORT=3000\n";
 
   if (dialect && dialect !== "none") {
@@ -243,6 +339,11 @@ export function envTemplate(dialect?: string, auth?: AuthConfig): string {
         result += `${prefix}_REDIRECT_URI=http://localhost:3000${config.callbackPath}\n`;
       }
     }
+  }
+
+  const storageConfig = storage && storage !== "none" ? STORAGE_CONFIGS[storage] : null;
+  if (storageConfig) {
+    result += storageConfig.envBlock;
   }
 
   return result;

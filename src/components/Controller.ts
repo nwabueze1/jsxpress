@@ -3,6 +3,8 @@ import type { ControllerSchema } from "../validation.js";
 import type { Repository } from "../db/repository.js";
 import type { DatabaseAdapter } from "../db/adapter.js";
 import { DATABASE_KEY } from "../db/database.js";
+import type { StorageAdapter } from "../storage/adapter.js";
+import { STORAGE_KEY } from "../storage/storage.js";
 
 const CONFIG_KEY = Symbol.for("jsxpress.config");
 
@@ -24,6 +26,10 @@ export abstract class Controller {
 
   protected config<T = Record<string, unknown>>(): T {
     return this.context<T>(CONFIG_KEY);
+  }
+
+  protected storage(): StorageAdapter {
+    return this.context<StorageAdapter>(STORAGE_KEY);
   }
 
   protected repo<T extends Repository>(RepoClass: new (db: DatabaseAdapter) => T): T {
