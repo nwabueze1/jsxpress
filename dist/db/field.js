@@ -25,6 +25,12 @@ export class FieldBuilder {
         this.def.defaultValue = value;
         return this;
     }
+    references(target, options) {
+        this.def.referencesTable = target.table;
+        this.def.referencesColumn = options?.column ?? "id";
+        this.def.onDelete = options?.onDelete;
+        return this;
+    }
     /** @internal */
     toDefinition() {
         return { ...this.def };
@@ -51,6 +57,9 @@ export const Field = {
     },
     real() {
         return new FieldBuilder("real");
+    },
+    uuid() {
+        return new FieldBuilder("uuid");
     },
 };
 //# sourceMappingURL=field.js.map

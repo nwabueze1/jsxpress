@@ -3,7 +3,7 @@ import { readdir } from "node:fs/promises";
 import { writeFileWithLog, mkdirIfNeeded } from "../utils/fs.js";
 import { ask, select, confirm } from "../utils/prompt.js";
 import { appTemplate, homeControllerTemplate, tsconfigTemplate, packageJsonTemplate, envTemplate, gitignoreTemplate, } from "../templates/project.js";
-import { authJwtTemplate, authPasswordTemplate, authOAuthUtilTemplate, userModelTemplate, oauthAccountModelTemplate, refreshTokenModelTemplate, userMigrationTemplate, oauthAccountMigrationTemplate, refreshTokenMigrationTemplate, authMiddlewareTemplate, authRegisterControllerTemplate, authLoginControllerTemplate, authRefreshControllerTemplate, authLogoutControllerTemplate, authOAuthControllerTemplate, authOAuthCallbackControllerTemplate, } from "../templates/auth.js";
+import { authJwtTemplate, authPasswordTemplate, authOAuthUtilTemplate, userModelTemplate, oauthAccountModelTemplate, refreshTokenModelTemplate, userMigrationTemplate, oauthAccountMigrationTemplate, refreshTokenMigrationTemplate, authMiddlewareTemplate, authRegisterControllerTemplate, authLoginControllerTemplate, authRefreshControllerTemplate, authLogoutControllerTemplate, authOAuthControllerTemplate, authOAuthCallbackControllerTemplate, userRepositoryTemplate, oauthAccountRepositoryTemplate, refreshTokenRepositoryTemplate, } from "../templates/auth.js";
 const green = (s) => `\x1b[32m${s}\x1b[0m`;
 async function isDirEmpty(path) {
     try {
@@ -35,6 +35,8 @@ export async function init(projectName) {
             githubOAuth = await confirm("Enable GitHub login?");
         }
     }
+    const storageDriver = await select("Select storage:", ["s3", "gcs", "azure", "none"]);
+    const cacheDriver = await select("Select cache:", ["memory", "redis", "none"]);
     const targetDir = join(process.cwd(), name);
     if (!(await isDirEmpty(targetDir))) {
         const proceed = await confirm("Directory is not empty. Continue?");
@@ -55,6 +57,7 @@ export async function init(projectName) {
         await mkdirIfNeeded(join(targetDir, "src", "auth"));
         await mkdirIfNeeded(join(targetDir, "src", "controllers", "auth"));
         await mkdirIfNeeded(join(targetDir, "src", "middleware"));
+        await mkdirIfNeeded(join(targetDir, "src", "repositories"));
         if (googleOAuth || facebookOAuth || githubOAuth) {
             await mkdirIfNeeded(join(targetDir, "src", "auth", "oauth"));
         }
@@ -65,11 +68,11 @@ export async function init(projectName) {
         : undefined;
     // Write files
     const files = [
-        [join(targetDir, "package.json"), packageJsonTemplate(name, dialect, authEnabled)],
+        [join(targetDir, "package.json"), packageJsonTemplate(name, dialect, authEnabled, storageDriver, cacheDriver)],
         [join(targetDir, "tsconfig.json"), tsconfigTemplate()],
-        [join(targetDir, ".env"), envTemplate(dialect, authConfig)],
+        [join(targetDir, ".env"), envTemplate(dialect, authConfig, storageDriver, cacheDriver)],
         [join(targetDir, ".gitignore"), gitignoreTemplate()],
-        [join(targetDir, "src", "app.tsx"), appTemplate(dialect, authConfig)],
+        [join(targetDir, "src", "app.tsx"), appTemplate(dialect, authConfig, storageDriver, cacheDriver)],
         [join(targetDir, "src", "controllers", "home.ts"), homeControllerTemplate()],
     ];
     if (authEnabled) {
@@ -77,6 +80,8 @@ export async function init(projectName) {
         files.push([join(targetDir, "src", "auth", "jwt.ts"), authJwtTemplate()], [join(targetDir, "src", "auth", "password.ts"), authPasswordTemplate()]);
         // Models
         files.push([join(targetDir, "src", "models", "User.ts"), userModelTemplate()], [join(targetDir, "src", "models", "OAuthAccount.ts"), oauthAccountModelTemplate()], [join(targetDir, "src", "models", "RefreshToken.ts"), refreshTokenModelTemplate()]);
+        // Repositories
+        files.push([join(targetDir, "src", "repositories", "UserRepository.ts"), userRepositoryTemplate()], [join(targetDir, "src", "repositories", "OAuthAccountRepository.ts"), oauthAccountRepositoryTemplate()], [join(targetDir, "src", "repositories", "RefreshTokenRepository.ts"), refreshTokenRepositoryTemplate()]);
         // Middleware
         files.push([join(targetDir, "src", "middleware", "auth.ts"), authMiddlewareTemplate()]);
         // Auth controllers

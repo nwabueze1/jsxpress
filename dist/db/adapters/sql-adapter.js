@@ -83,9 +83,31 @@ export class SqlAdapter {
             return { whereSQL: "", params: [] };
         const d = this.dialect;
         const params = [];
-        const parts = where.map((w, i) => {
+        let paramCount = paramOffset;
+        const parts = where.map((w) => {
+            const col = quoteIdent(w.column, d);
+            const op = w.op.toLowerCase();
+            if (op === "is null") {
+                return `${col} IS NULL`;
+            }
+            if (op === "is not null") {
+                return `${col} IS NOT NULL`;
+            }
+            if (op === "in" || op === "not in") {
+                const values = w.value;
+                if (values.length === 0) {
+                    return op === "in" ? "1 = 0" : "1 = 1";
+                }
+                const placeholders = values.map((v) => {
+                    paramCount++;
+                    params.push(v);
+                    return placeholder(paramCount, d);
+                });
+                return `${col} ${w.op} (${placeholders.join(", ")})`;
+            }
+            paramCount++;
             params.push(w.value);
-            return `${quoteIdent(w.column, d)} ${w.op} ${placeholder(paramOffset + i + 1, d)}`;
+            return `${col} ${w.op} ${placeholder(paramCount, d)}`;
         });
         return { whereSQL: ` WHERE ${parts.join(" AND ")}`, params };
     }

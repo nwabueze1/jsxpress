@@ -1,12 +1,13 @@
 import { join } from "node:path";
-import { readdir } from "node:fs/promises";
 import { writeFileWithLog } from "../utils/fs.js";
 import { controllerTemplate } from "../templates/controller.js";
 import { modelTemplate } from "../templates/model.js";
 import { middlewareTemplate } from "../templates/middleware.js";
 import { migrationTemplate } from "../templates/migration.js";
+import { serviceTemplate } from "../templates/service.js";
+import { nextMigrationNumber, pad } from "../utils/migration.js";
 const red = (s) => `\x1b[31m${s}\x1b[0m`;
-const VALID_TYPES = ["controller", "model", "middleware", "migration"];
+const VALID_TYPES = ["controller", "model", "middleware", "migration", "service"];
 function parseFields(args) {
     return args
         .filter((a) => a.includes(":"))
@@ -24,27 +25,6 @@ async function dirExists(path) {
     catch {
         return false;
     }
-}
-async function nextMigrationNumber(migrationsDir) {
-    try {
-        const entries = await readdir(migrationsDir);
-        let max = 0;
-        for (const entry of entries) {
-            const match = entry.match(/^(\d+)/);
-            if (match) {
-                const n = parseInt(match[1], 10);
-                if (n > max)
-                    max = n;
-            }
-        }
-        return max + 1;
-    }
-    catch {
-        return 1;
-    }
-}
-function pad(n, width) {
-    return String(n).padStart(width, "0");
 }
 export async function generate(type, name, args, force) {
     if (!VALID_TYPES.includes(type)) {
@@ -85,6 +65,15 @@ export async function generate(type, name, args, force) {
             }
             const filePath = join(cwd, "src", "middleware", `${name}.ts`);
             await writeFileWithLog(filePath, middlewareTemplate(name), force);
+            break;
+        }
+        case "service": {
+            if (!(await dirExists(join(cwd, "src")))) {
+                console.log(red("Not in a jsxpress project. No src/ directory found."));
+                return;
+            }
+            const filePath = join(cwd, "src", "services", `${name}.ts`);
+            await writeFileWithLog(filePath, serviceTemplate(name), force);
             break;
         }
         case "migration": {

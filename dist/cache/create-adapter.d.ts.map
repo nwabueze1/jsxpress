@@ -1,0 +1,1 @@
+{"version":3,"file":"create-adapter.d.ts","sourceRoot":"","sources":["../../src/cache/create-adapter.ts"],"names":[],"mappings":"AAAA,OAAO,KAAK,EAAE,YAAY,EAAE,WAAW,EAAE,MAAM,cAAc,CAAC;AAE9D,OAAO,KAAK,EAAE,kBAAkB,EAAE,MAAM,qBAAqB,CAAC;AAG9D,wBAAgB,kBAAkB,CAChC,MAAM,EAAE,WAAW,EACnB,MAAM,CAAC,EAAE,kBAAkB,GAC1B,YAAY,CASd"}

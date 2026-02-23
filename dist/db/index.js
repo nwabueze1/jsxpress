@@ -2,6 +2,12 @@ export { Field, FieldBuilder } from "./field.js";
 export { Model } from "./model.js";
 export { QueryBuilder } from "./query-builder.js";
 export { Database, DATABASE_KEY } from "./database.js";
-export { DatabaseController } from "./database-controller.js";
+export { Repository } from "./repository.js";
 export { MigrationRunner } from "./migration.js";
+export { hasMany, hasOne, belongsTo } from "./relations.js";
+export { buildColumnDef, buildCreateTable, buildCreateTableFromDefs, fieldTypeToSql, quoteIdent } from "./sql.js";
+export { introspectTable, listTables } from "./introspect.js";
+export { resolveModelSchema, diffSchema, typesMatch } from "./schema-diff.js";
+export { generateMigrationSQL, generateMigrationFile } from "./migration-generator.js";
+export { discoverModels } from "./model-discovery.js";
 //# sourceMappingURL=index.js.map

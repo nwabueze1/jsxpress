@@ -3,7 +3,9 @@ import { compileTree } from "./tree.js";
 import { Router } from "./router.js";
 import { executeChain } from "./middleware.js";
 import { createAdapter } from "./server/index.js";
+import { parseFormData } from "./storage/form-data.js";
 export { Controller } from "./components/Controller.js";
+export { Service } from "./components/Service.js";
 export { Middleware } from "./components/Middleware.js";
 export { Provider } from "./components/Provider.js";
 export { App } from "./components/App.js";
@@ -13,8 +15,13 @@ export { v, BaseSchema } from "./validation.js";
 // Config
 export { Config, ConfigController, CONFIG_KEY, parseEnvFile, validateConfig } from "./config/index.js";
 // Database
-export { Database, DatabaseController, Model, Field, DATABASE_KEY } from "./db/index.js";
-export { QueryBuilder, MigrationRunner } from "./db/index.js";
+export { Database, Repository, Model, Field, DATABASE_KEY } from "./db/index.js";
+export { QueryBuilder, MigrationRunner, hasMany, hasOne, belongsTo } from "./db/index.js";
+// Storage
+export { Storage, STORAGE_KEY, FileUpload, parseFormData, S3Adapter, GCSAdapter, AzureBlobAdapter } from "./storage/index.js";
+// Cache
+export { Cache, CACHE_KEY, MemoryAdapter, RedisAdapter } from "./cache/index.js";
+export { RateLimit, MemoryRateLimitStore, CacheRateLimitStore } from "./rate-limit/index.js";
 function createJsxpressRequest(raw) {
     const url = new URL(raw.url);
     return {
@@ -26,6 +33,7 @@ function createJsxpressRequest(raw) {
         headers: raw.headers,
         json: () => raw.json(),
         text: () => raw.text(),
+        formData: () => parseFormData(raw),
     };
 }
 function extractAppProps(tree) {

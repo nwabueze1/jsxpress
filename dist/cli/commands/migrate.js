@@ -3,7 +3,12 @@ import { createDatabaseAdapter } from "../../db/create-adapter.js";
 import { MigrationRunner } from "../../db/migration.js";
 const red = (s) => `\x1b[31m${s}\x1b[0m`;
 const green = (s) => `\x1b[32m${s}\x1b[0m`;
-export async function migrate(subcommand) {
+export async function migrate(subcommand, args = []) {
+    if (subcommand === "generate") {
+        const { migrateGenerate } = await import("./migrate-generate.js");
+        await migrateGenerate({ name: args[0] });
+        return;
+    }
     const dialect = process.env.DB_DIALECT;
     const url = process.env.DB_URL;
     if (!dialect || !url) {
@@ -43,7 +48,7 @@ export async function migrate(subcommand) {
             }
             default:
                 console.log(red(`Unknown migrate subcommand: ${subcommand}`));
-                console.log("Valid subcommands: up, down, status");
+                console.log("Valid subcommands: up, down, status, generate");
         }
     }
     finally {
