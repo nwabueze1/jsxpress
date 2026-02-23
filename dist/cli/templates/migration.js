@@ -1,12 +1,16 @@
 export function migrationTemplate() {
-    return `import type { DatabaseAdapter } from "jsxserve";
+    return `import type { Schema } from "jsxserve";
 
-export async function up(adapter: DatabaseAdapter): Promise<void> {
-  await adapter.raw("");
+export async function up(schema: Schema): Promise<void> {
+  // schema.create("table_name", (table) => {
+  //   table.serial("id").primaryKey();
+  //   table.text("name").notNull();
+  //   table.timestamps();
+  // });
 }
 
-export async function down(adapter: DatabaseAdapter): Promise<void> {
-  await adapter.raw("");
+export async function down(schema: Schema): Promise<void> {
+  // schema.dropIfExists("table_name");
 }
 `;
 }

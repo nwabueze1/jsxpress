@@ -12,7 +12,7 @@ export { v, BaseSchema } from "./validation.js";
 export type { ValidationError, MethodSchema, ControllerSchema } from "./validation.js";
 export { Config, ConfigController, CONFIG_KEY, parseEnvFile, validateConfig } from "./config/index.js";
 export type { ConfigProps } from "./config/index.js";
-export { Database, Repository, Model, Field, DATABASE_KEY } from "./db/index.js";
+export { Database, Repository, Model, Field, Schema, Blueprint, DATABASE_KEY } from "./db/index.js";
 export { QueryBuilder, MigrationRunner, hasMany, hasOne, belongsTo } from "./db/index.js";
 export type { Dialect, DatabaseAdapter, QueryResult, DatabaseProps, Migration, MigrationRecord, RelationDefinition, OnDelete } from "./db/index.js";
 export { Storage, STORAGE_KEY, FileUpload, parseFormData, S3Adapter, GCSAdapter, AzureBlobAdapter } from "./storage/index.js";

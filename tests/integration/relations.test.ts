@@ -46,9 +46,9 @@ beforeAll(async () => {
   db = new SqliteAdapter(DB_PATH);
   await db.connect();
   // Create tables in dependency order
-  await User.syncTable(db);
-  await Post.syncTable(db);
-  await Profile.syncTable(db);
+  await db.createCollection("users", User.schema);
+  await db.createCollection("posts", Post.schema);
+  await db.createCollection("profiles", Profile.schema);
 });
 
 afterAll(async () => {

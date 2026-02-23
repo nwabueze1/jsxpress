@@ -1,7 +1,8 @@
 import type { DatabaseAdapter } from "./adapter.js";
+import { Schema } from "./schema.js";
 export interface Migration {
-    up(adapter: DatabaseAdapter): Promise<void>;
-    down?(adapter: DatabaseAdapter): Promise<void>;
+    up(schema: Schema): Promise<void> | void;
+    down?(schema: Schema): Promise<void> | void;
 }
 export interface MigrationRecord {
     id: number;

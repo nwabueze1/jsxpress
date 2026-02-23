@@ -28,8 +28,8 @@ describe("UUID model", () => {
     };
   }
 
-  it("syncTable creates TEXT column for uuid in SQLite", async () => {
-    await Token.syncTable(db);
+  it("creates TEXT column for uuid in SQLite", async () => {
+    await db.createCollection("tokens", Token.schema);
     const result = await db.raw("PRAGMA table_info(tokens)");
     const idCol = result.rows.find((r) => r.name === "id");
     expect(idCol).toBeDefined();
@@ -37,7 +37,7 @@ describe("UUID model", () => {
   });
 
   it("create auto-generates a UUID", async () => {
-    await Token.syncTable(db);
+    await db.createCollection("tokens", Token.schema);
     const token = await Token.query(db).create({ value: "abc" });
     expect(typeof token.id).toBe("string");
     expect((token.id as string).length).toBe(36);
@@ -45,14 +45,14 @@ describe("UUID model", () => {
   });
 
   it("preserves user-supplied UUID", async () => {
-    await Token.syncTable(db);
+    await db.createCollection("tokens", Token.schema);
     const customId = "my-custom-uuid-value-here-1234567";
     const token = await Token.query(db).create({ id: customId, value: "xyz" } as any);
     expect(token.id).toBe(customId);
   });
 
   it("generates unique UUIDs for each row", async () => {
-    await Token.syncTable(db);
+    await db.createCollection("tokens", Token.schema);
     const t1 = await Token.query(db).create({ value: "a" });
     const t2 = await Token.query(db).create({ value: "b" });
     expect(t1.id).not.toBe(t2.id);
@@ -66,11 +66,13 @@ describe("Timestamps model", () => {
     static schema = {
       id: Field.serial().primaryKey(),
       title: Field.text().notNull(),
+      created_at: Field.timestamp().notNull(),
+      updated_at: Field.timestamp().notNull(),
     };
   }
 
-  it("syncTable creates timestamp columns", async () => {
-    await Article.syncTable(db);
+  it("creates timestamp columns", async () => {
+    await db.createCollection("articles", Article.schema);
     const result = await db.raw("PRAGMA table_info(articles)");
     const colNames = result.rows.map((r) => r.name);
     expect(colNames).toContain("created_at");
@@ -78,7 +80,7 @@ describe("Timestamps model", () => {
   });
 
   it("create auto-sets created_at and updated_at", async () => {
-    await Article.syncTable(db);
+    await db.createCollection("articles", Article.schema);
     const before = new Date().toISOString();
     const article = await Article.query(db).create({ title: "Hello" });
     const after = new Date().toISOString();
@@ -90,7 +92,7 @@ describe("Timestamps model", () => {
   });
 
   it("update auto-sets updated_at", async () => {
-    await Article.syncTable(db);
+    await db.createCollection("articles", Article.schema);
     const article = await Article.query(db).create({ title: "Hello" });
     const originalUpdatedAt = article.updated_at;
 
@@ -112,18 +114,21 @@ describe("Soft delete model", () => {
     static schema = {
       id: Field.serial().primaryKey(),
       title: Field.text().notNull(),
+      created_at: Field.timestamp().notNull(),
+      updated_at: Field.timestamp().notNull(),
+      deleted_at: Field.timestamp(),
     };
   }
 
-  it("syncTable creates deleted_at column", async () => {
-    await Post.syncTable(db);
+  it("creates deleted_at column", async () => {
+    await db.createCollection("posts", Post.schema);
     const result = await db.raw("PRAGMA table_info(posts)");
     const colNames = result.rows.map((r) => r.name);
     expect(colNames).toContain("deleted_at");
   });
 
   it("delete() soft-deletes the row", async () => {
-    await Post.syncTable(db);
+    await db.createCollection("posts", Post.schema);
     await Post.query(db).create({ title: "Post 1" });
     await Post.query(db).where("id", 1).delete();
 
@@ -134,7 +139,7 @@ describe("Soft delete model", () => {
   });
 
   it("findAll() excludes soft-deleted rows", async () => {
-    await Post.syncTable(db);
+    await db.createCollection("posts", Post.schema);
     await Post.query(db).create({ title: "Post 1" });
     await Post.query(db).create({ title: "Post 2" });
     await Post.query(db).where("id", 1).delete();
@@ -145,7 +150,7 @@ describe("Soft delete model", () => {
   });
 
   it("withTrashed() includes soft-deleted rows", async () => {
-    await Post.syncTable(db);
+    await db.createCollection("posts", Post.schema);
     await Post.query(db).create({ title: "Post 1" });
     await Post.query(db).create({ title: "Post 2" });
     await Post.query(db).where("id", 1).delete();
@@ -155,7 +160,7 @@ describe("Soft delete model", () => {
   });
 
   it("forceDelete() hard-deletes the row", async () => {
-    await Post.syncTable(db);
+    await db.createCollection("posts", Post.schema);
     await Post.query(db).create({ title: "Post 1" });
     await Post.query(db).where("id", 1).forceDelete();
 
@@ -164,7 +169,7 @@ describe("Soft delete model", () => {
   });
 
   it("count() excludes soft-deleted rows", async () => {
-    await Post.syncTable(db);
+    await db.createCollection("posts", Post.schema);
     await Post.query(db).create({ title: "Post 1" });
     await Post.query(db).create({ title: "Post 2" });
     await Post.query(db).where("id", 1).delete();

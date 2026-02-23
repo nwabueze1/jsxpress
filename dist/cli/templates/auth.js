@@ -171,84 +171,57 @@ export class RefreshToken extends Model {
 }
 `;
 }
-function sqlTypes(dialect) {
-    const isPostgres = dialect === "postgres";
-    return {
-        serial: isPostgres ? "SERIAL" : "INTEGER",
-        autoIncrement: isPostgres ? "" : " AUTOINCREMENT",
-        primaryKey: isPostgres ? " PRIMARY KEY" : " PRIMARY KEY",
-        timestamp: isPostgres ? "TIMESTAMP DEFAULT NOW()" : "TEXT DEFAULT (datetime('now'))",
-        text: "TEXT",
-        integer: "INTEGER",
-    };
-}
-export function userMigrationTemplate(dialect) {
-    const t = sqlTypes(dialect);
-    const pk = dialect === "postgres"
-        ? `id ${t.serial} PRIMARY KEY`
-        : `id INTEGER PRIMARY KEY AUTOINCREMENT`;
-    return `import type { DatabaseAdapter } from "jsxserve";
+export function userMigrationTemplate(_dialect) {
+    return `import type { Schema } from "jsxserve";
 
-export async function up(adapter: DatabaseAdapter): Promise<void> {
-  await adapter.raw(\`
-    CREATE TABLE IF NOT EXISTS users (
-      ${pk},
-      email TEXT NOT NULL UNIQUE,
-      password_hash TEXT,
-      name TEXT NOT NULL,
-      created_at ${t.timestamp}
-    )
-  \`);
+export async function up(schema: Schema): Promise<void> {
+  schema.create("users", (table) => {
+    table.serial("id").primaryKey();
+    table.text("email").notNull().unique();
+    table.text("password_hash");
+    table.text("name").notNull();
+    table.timestamp("created_at").notNull();
+  });
 }
 
-export async function down(adapter: DatabaseAdapter): Promise<void> {
-  await adapter.raw("DROP TABLE IF EXISTS users");
+export async function down(schema: Schema): Promise<void> {
+  schema.dropIfExists("users");
 }
 `;
 }
-export function oauthAccountMigrationTemplate(dialect) {
-    const pk = dialect === "postgres"
-        ? "id SERIAL PRIMARY KEY"
-        : "id INTEGER PRIMARY KEY AUTOINCREMENT";
-    return `import type { DatabaseAdapter } from "jsxserve";
+export function oauthAccountMigrationTemplate(_dialect) {
+    return `import type { Schema } from "jsxserve";
 
-export async function up(adapter: DatabaseAdapter): Promise<void> {
-  await adapter.raw(\`
-    CREATE TABLE IF NOT EXISTS oauth_accounts (
-      ${pk},
-      user_id INTEGER NOT NULL,
-      provider TEXT NOT NULL,
-      provider_user_id TEXT NOT NULL,
-      email TEXT NOT NULL,
-      UNIQUE(provider, provider_user_id)
-    )
-  \`);
+export async function up(schema: Schema): Promise<void> {
+  schema.create("oauth_accounts", (table) => {
+    table.serial("id").primaryKey();
+    table.integer("user_id").notNull();
+    table.text("provider").notNull();
+    table.text("provider_user_id").notNull();
+    table.text("email").notNull();
+    table.unique(["provider", "provider_user_id"]);
+  });
 }
 
-export async function down(adapter: DatabaseAdapter): Promise<void> {
-  await adapter.raw("DROP TABLE IF EXISTS oauth_accounts");
+export async function down(schema: Schema): Promise<void> {
+  schema.dropIfExists("oauth_accounts");
 }
 `;
 }
-export function refreshTokenMigrationTemplate(dialect) {
-    const pk = dialect === "postgres"
-        ? "id SERIAL PRIMARY KEY"
-        : "id INTEGER PRIMARY KEY AUTOINCREMENT";
-    return `import type { DatabaseAdapter } from "jsxserve";
+export function refreshTokenMigrationTemplate(_dialect) {
+    return `import type { Schema } from "jsxserve";
 
-export async function up(adapter: DatabaseAdapter): Promise<void> {
-  await adapter.raw(\`
-    CREATE TABLE IF NOT EXISTS refresh_tokens (
-      ${pk},
-      user_id INTEGER NOT NULL,
-      token TEXT NOT NULL UNIQUE,
-      expires_at TEXT NOT NULL
-    )
-  \`);
+export async function up(schema: Schema): Promise<void> {
+  schema.create("refresh_tokens", (table) => {
+    table.serial("id").primaryKey();
+    table.integer("user_id").notNull();
+    table.text("token").notNull().unique();
+    table.text("expires_at").notNull();
+  });
 }
 
-export async function down(adapter: DatabaseAdapter): Promise<void> {
-  await adapter.raw("DROP TABLE IF EXISTS refresh_tokens");
+export async function down(schema: Schema): Promise<void> {
+  schema.dropIfExists("refresh_tokens");
 }
 `;
 }

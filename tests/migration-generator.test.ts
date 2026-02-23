@@ -126,7 +126,7 @@ describe("generateMigrationFile", () => {
       ['CREATE TABLE IF NOT EXISTS "users" ("id" INTEGER PRIMARY KEY)'],
       ['DROP TABLE IF EXISTS "users"'],
     );
-    expect(file).toContain('import type { DatabaseAdapter } from "jsxserve"');
+    expect(file).toContain('import type { Schema } from "jsxserve"');
     expect(file).toContain("export async function up");
     expect(file).toContain("export async function down");
   });
@@ -136,11 +136,11 @@ describe("generateMigrationFile", () => {
       ['CREATE TABLE IF NOT EXISTS "users" ("id" INTEGER PRIMARY KEY)'],
       ['DROP TABLE IF EXISTS "users"'],
     );
-    expect(file).toContain("await adapter.raw(`");
-    expect(file).not.toContain('adapter.raw("');
+    expect(file).toContain("schema.raw(`");
+    expect(file).not.toContain('schema.raw("');
   });
 
-  it("preserves comment lines without wrapping in adapter.raw", () => {
+  it("preserves comment lines without wrapping in schema.raw", () => {
     const file = generateMigrationFile(
       ["-- WARNING: this is a comment", 'ALTER TABLE "t" DROP COLUMN "c"'],
       ["-- TODO: reverse"],

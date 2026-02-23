@@ -4,6 +4,7 @@ export { QueryBuilder } from "./query-builder.js";
 export { Database, DATABASE_KEY } from "./database.js";
 export { Repository } from "./repository.js";
 export { MigrationRunner } from "./migration.js";
+export { Schema, Blueprint } from "./schema.js";
 export { hasMany, hasOne, belongsTo } from "./relations.js";
 export { buildColumnDef, buildCreateTable, buildCreateTableFromDefs, fieldTypeToSql, quoteIdent } from "./sql.js";
 export { introspectTable, listTables } from "./introspect.js";

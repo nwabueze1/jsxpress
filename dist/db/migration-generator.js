@@ -55,18 +55,18 @@ function escapeTemplateLiteral(s) {
 }
 export function generateMigrationFile(upStatements, downStatements) {
     const upBody = upStatements
-        .map((s) => s.startsWith("--") ? `  ${s}` : `  await adapter.raw(\`${escapeTemplateLiteral(s)}\`);`)
+        .map((s) => s.startsWith("--") ? `  ${s}` : `  schema.raw(\`${escapeTemplateLiteral(s)}\`);`)
         .join("\n");
     const downBody = downStatements
-        .map((s) => s.startsWith("--") ? `  ${s}` : `  await adapter.raw(\`${escapeTemplateLiteral(s)}\`);`)
+        .map((s) => s.startsWith("--") ? `  ${s}` : `  schema.raw(\`${escapeTemplateLiteral(s)}\`);`)
         .join("\n");
-    return `import type { DatabaseAdapter } from "jsxserve";
+    return `import type { Schema } from "jsxserve";
 
-export async function up(adapter: DatabaseAdapter): Promise<void> {
+export async function up(schema: Schema): Promise<void> {
 ${upBody}
 }
 
-export async function down(adapter: DatabaseAdapter): Promise<void> {
+export async function down(schema: Schema): Promise<void> {
 ${downBody}
 }
 `;

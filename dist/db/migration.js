@@ -1,5 +1,6 @@
 import { readdir } from "node:fs/promises";
 import { join } from "node:path";
+import { Schema } from "./schema.js";
 import { quoteIdent, placeholder } from "./sql.js";
 const MIGRATION_PATTERN = /^(\d+)[_-](.+)\.(ts|js|mjs)$/;
 export class MigrationRunner {
@@ -52,7 +53,9 @@ export class MigrationRunner {
         for (const record of todo) {
             const filePath = join(this.migrationsPath, record.filename);
             const mod = await import(filePath);
-            await mod.up(this.adapter);
+            const schema = new Schema(this.adapter);
+            await mod.up(schema);
+            await schema.execute();
             const d = this.adapter.dialect;
             const table = quoteIdent("_migrations", d);
             const id = quoteIdent("id", d);
@@ -81,7 +84,9 @@ export class MigrationRunner {
         if (!mod.down) {
             throw new Error(`Migration ${latest.filename} does not export a down() function`);
         }
-        await mod.down(this.adapter);
+        const schema = new Schema(this.adapter);
+        await mod.down(schema);
+        await schema.execute();
         const d = this.adapter.dialect;
         const table = quoteIdent("_migrations", d);
         const id = quoteIdent("id", d);

@@ -9,6 +9,11 @@ export async function migrate(subcommand, args = []) {
         await migrateGenerate({ name: args[0] });
         return;
     }
+    if (subcommand === "diff") {
+        const { migrateDiff } = await import("./migrate-diff.js");
+        await migrateDiff({ name: args[0] });
+        return;
+    }
     const dialect = process.env.DB_DIALECT;
     const url = process.env.DB_URL;
     if (!dialect || !url) {
@@ -48,7 +53,7 @@ export async function migrate(subcommand, args = []) {
             }
             default:
                 console.log(red(`Unknown migrate subcommand: ${subcommand}`));
-                console.log("Valid subcommands: up, down, status, generate");
+                console.log("Valid subcommands: up, down, status, generate, diff");
         }
     }
     finally {

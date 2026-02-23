@@ -23,11 +23,11 @@ async function writeMigration(
   downSql?: string,
 ): Promise<void> {
   const downFn = downSql
-    ? `export async function down(adapter) { await adapter.raw(${JSON.stringify(downSql)}); }`
+    ? `export async function down(schema) { schema.raw(${JSON.stringify(downSql)}); }`
     : "";
   const content = `
-export async function up(adapter) {
-  await adapter.raw(${JSON.stringify(upSql)});
+export async function up(schema) {
+  schema.raw(${JSON.stringify(upSql)});
 }
 ${downFn}
 `;

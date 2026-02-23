@@ -1,1 +1,1 @@
-{"version":3,"file":"migrate-generate.d.ts","sourceRoot":"","sources":["../../../src/cli/commands/migrate-generate.ts"],"names":[],"mappings":"AAkBA,MAAM,WAAW,sBAAsB;IACrC,IAAI,CAAC,EAAE,MAAM,CAAC;IACd,SAAS,CAAC,EAAE,MAAM,CAAC;CACpB;AAED,wBAAsB,eAAe,CAAC,OAAO,GAAE,sBAA2B,GAAG,OAAO,CAAC,IAAI,CAAC,CAkGzF"}
+{"version":3,"file":"migrate-generate.d.ts","sourceRoot":"","sources":["../../../src/cli/commands/migrate-generate.ts"],"names":[],"mappings":"AAOA,MAAM,WAAW,sBAAsB;IACrC,IAAI,CAAC,EAAE,MAAM,CAAC;CACf;AAED,wBAAsB,eAAe,CAAC,OAAO,GAAE,sBAA2B,GAAG,OAAO,CAAC,IAAI,CAAC,CAWzF"}

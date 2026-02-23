@@ -52,10 +52,10 @@ async function createTempMigrations(
 
   for (const file of files) {
     const downFn = file.down
-      ? `export async function down(adapter) { ${file.down} }`
+      ? `export async function down(schema) { ${file.down} }`
       : "";
     const content = `
-export async function up(adapter) { ${file.up} }
+export async function up(schema) { ${file.up} }
 ${downFn}
 `;
     await writeFile(join(dir, file.name), content);
@@ -217,11 +217,11 @@ describe("MigrationRunner", () => {
       tempDir = await createTempMigrations([
         {
           name: "001_first.js",
-          up: `await adapter.raw("CREATE TABLE t1 (id INT)");`,
+          up: `schema.raw("CREATE TABLE t1 (id INT)");`,
         },
         {
           name: "002_second.js",
-          up: `await adapter.raw("CREATE TABLE t2 (id INT)");`,
+          up: `schema.raw("CREATE TABLE t2 (id INT)");`,
         },
       ]);
 
@@ -249,11 +249,11 @@ describe("MigrationRunner", () => {
       tempDir = await createTempMigrations([
         {
           name: "001_first.js",
-          up: `await adapter.raw("CREATE TABLE t1 (id INT)");`,
+          up: `schema.raw("CREATE TABLE t1 (id INT)");`,
         },
         {
           name: "002_second.js",
-          up: `await adapter.raw("CREATE TABLE t2 (id INT)");`,
+          up: `schema.raw("CREATE TABLE t2 (id INT)");`,
         },
       ]);
 
@@ -274,13 +274,13 @@ describe("MigrationRunner", () => {
       tempDir = await createTempMigrations([
         {
           name: "001_first.js",
-          up: `await adapter.raw("CREATE TABLE t1 (id INT)");`,
-          down: `await adapter.raw("DROP TABLE t1");`,
+          up: `schema.raw("CREATE TABLE t1 (id INT)");`,
+          down: `schema.raw("DROP TABLE t1");`,
         },
         {
           name: "002_second.js",
-          up: `await adapter.raw("CREATE TABLE t2 (id INT)");`,
-          down: `await adapter.raw("DROP TABLE t2");`,
+          up: `schema.raw("CREATE TABLE t2 (id INT)");`,
+          down: `schema.raw("DROP TABLE t2");`,
         },
       ]);
 
@@ -306,7 +306,7 @@ describe("MigrationRunner", () => {
       tempDir = await createTempMigrations([
         {
           name: "001_first.js",
-          up: `await adapter.raw("CREATE TABLE t1 (id INT)");`,
+          up: `schema.raw("CREATE TABLE t1 (id INT)");`,
           // no down
         },
       ]);
@@ -343,18 +343,18 @@ describe("MigrationRunner", () => {
       tempDir = await createTempMigrations([
         {
           name: "001_first.js",
-          up: `await adapter.raw("CREATE TABLE t1 (id INT)");`,
-          down: `await adapter.raw("DROP TABLE t1");`,
+          up: `schema.raw("CREATE TABLE t1 (id INT)");`,
+          down: `schema.raw("DROP TABLE t1");`,
         },
         {
           name: "002_second.js",
-          up: `await adapter.raw("CREATE TABLE t2 (id INT)");`,
-          down: `await adapter.raw("DROP TABLE t2");`,
+          up: `schema.raw("CREATE TABLE t2 (id INT)");`,
+          down: `schema.raw("DROP TABLE t2");`,
         },
         {
           name: "003_third.js",
-          up: `await adapter.raw("CREATE TABLE t3 (id INT)");`,
-          down: `await adapter.raw("DROP TABLE t3");`,
+          up: `schema.raw("CREATE TABLE t3 (id INT)");`,
+          down: `schema.raw("DROP TABLE t3");`,
         },
       ]);
 
@@ -379,18 +379,18 @@ describe("MigrationRunner", () => {
       tempDir = await createTempMigrations([
         {
           name: "001_first.js",
-          up: `await adapter.raw("CREATE TABLE t1 (id INT)");`,
-          down: `await adapter.raw("DROP TABLE t1");`,
+          up: `schema.raw("CREATE TABLE t1 (id INT)");`,
+          down: `schema.raw("DROP TABLE t1");`,
         },
         {
           name: "002_second.js",
-          up: `await adapter.raw("CREATE TABLE t2 (id INT)");`,
-          down: `await adapter.raw("DROP TABLE t2");`,
+          up: `schema.raw("CREATE TABLE t2 (id INT)");`,
+          down: `schema.raw("DROP TABLE t2");`,
         },
         {
           name: "003_third.js",
-          up: `await adapter.raw("CREATE TABLE t3 (id INT)");`,
-          down: `await adapter.raw("DROP TABLE t3");`,
+          up: `schema.raw("CREATE TABLE t3 (id INT)");`,
+          down: `schema.raw("DROP TABLE t3");`,
         },
       ]);
 

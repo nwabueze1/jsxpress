@@ -1,4 +1,4 @@
-import { describe, it, expect, afterEach } from "vitest";
+import { describe, it, expect, afterEach, beforeEach } from "vitest";
 import { jsx } from "../../src/jsx-runtime.js";
 import { serve } from "../../src/index.js";
 import { App } from "../../src/components/App.js";
@@ -8,6 +8,7 @@ import { Repository } from "../../src/db/repository.js";
 import { Model } from "../../src/db/model.js";
 import { Field } from "../../src/db/field.js";
 import { Res } from "../../src/response.js";
+import { SqliteAdapter } from "../../src/db/adapters/sqlite.js";
 import type { JsxpressRequest } from "../../src/types.js";
 import type { ServerHandle } from "../../src/server/types.js";
 import { unlinkSync } from "node:fs";
@@ -74,6 +75,13 @@ class UserById extends Controller {
 const DB_PATH = "./test-integration.db";
 let handle: ServerHandle | undefined;
 
+async function setupTable(): Promise<void> {
+  const adapter = new SqliteAdapter(DB_PATH);
+  await adapter.connect();
+  await adapter.createCollection("users", User.schema);
+  await adapter.close();
+}
+
 afterEach(async () => {
   if (handle) {
     await handle.close();
@@ -83,13 +91,14 @@ afterEach(async () => {
 });
 
 describe("database integration", () => {
-  it("creates tables on startup and handles CRUD", async () => {
+  it("connects and handles CRUD", async () => {
+    await setupTable();
+
     const tree = jsx(App, {
       port: 0,
       children: jsx(Database, {
         dialect: "sqlite",
         url: DB_PATH,
-        models: [User],
         children: jsx(Users, {}),
       }),
     });
@@ -133,12 +142,13 @@ describe("database integration", () => {
   });
 
   it("database shuts down cleanly on close", async () => {
+    await setupTable();
+
     const tree = jsx(App, {
       port: 0,
       children: jsx(Database, {
         dialect: "sqlite",
         url: DB_PATH,
-        models: [User],
         children: jsx(Users, {}),
       }),
     });

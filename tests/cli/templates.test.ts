@@ -70,9 +70,9 @@ describe("middlewareTemplate", () => {
 describe("migrationTemplate", () => {
   it("generates up and down functions", () => {
     const result = migrationTemplate();
-    expect(result).toContain("up(adapter");
-    expect(result).toContain("down(adapter");
-    expect(result).toContain("DatabaseAdapter");
+    expect(result).toContain("up(schema");
+    expect(result).toContain("down(schema");
+    expect(result).toContain("Schema");
   });
 });
 
@@ -533,37 +533,37 @@ describe("refreshTokenModelTemplate", () => {
 });
 
 describe("userMigrationTemplate", () => {
-  it("generates sqlite migration with AUTOINCREMENT", () => {
+  it("generates Schema-based migration with correct fields", () => {
     const result = userMigrationTemplate("sqlite");
-    expect(result).toContain("CREATE TABLE IF NOT EXISTS users");
-    expect(result).toContain("AUTOINCREMENT");
-    expect(result).toContain("email TEXT NOT NULL UNIQUE");
-    expect(result).toContain("password_hash TEXT");
-    expect(result).toContain("DROP TABLE IF EXISTS users");
+    expect(result).toContain('schema.create("users"');
+    expect(result).toContain('table.text("email").notNull().unique()');
+    expect(result).toContain('table.text("password_hash")');
+    expect(result).toContain('table.text("name").notNull()');
+    expect(result).toContain('schema.dropIfExists("users")');
   });
 
-  it("generates postgres migration with SERIAL", () => {
+  it("uses Schema type instead of DatabaseAdapter", () => {
     const result = userMigrationTemplate("postgres");
-    expect(result).toContain("SERIAL PRIMARY KEY");
-    expect(result).not.toContain("AUTOINCREMENT");
+    expect(result).toContain("Schema");
+    expect(result).not.toContain("DatabaseAdapter");
   });
 });
 
 describe("oauthAccountMigrationTemplate", () => {
-  it("generates migration with unique constraint", () => {
+  it("generates Schema-based migration with unique constraint", () => {
     const result = oauthAccountMigrationTemplate("sqlite");
-    expect(result).toContain("CREATE TABLE IF NOT EXISTS oauth_accounts");
-    expect(result).toContain("UNIQUE(provider, provider_user_id)");
-    expect(result).toContain("DROP TABLE IF EXISTS oauth_accounts");
+    expect(result).toContain('schema.create("oauth_accounts"');
+    expect(result).toContain('table.unique(["provider", "provider_user_id"])');
+    expect(result).toContain('schema.dropIfExists("oauth_accounts")');
   });
 });
 
 describe("refreshTokenMigrationTemplate", () => {
-  it("generates migration with token unique constraint", () => {
+  it("generates Schema-based migration with token unique", () => {
     const result = refreshTokenMigrationTemplate("sqlite");
-    expect(result).toContain("CREATE TABLE IF NOT EXISTS refresh_tokens");
-    expect(result).toContain("token TEXT NOT NULL UNIQUE");
-    expect(result).toContain("DROP TABLE IF EXISTS refresh_tokens");
+    expect(result).toContain('schema.create("refresh_tokens"');
+    expect(result).toContain('table.text("token").notNull().unique()');
+    expect(result).toContain('schema.dropIfExists("refresh_tokens")');
   });
 });
 

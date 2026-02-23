@@ -1,0 +1,1 @@
+{"version":3,"file":"migrate-diff.d.ts","sourceRoot":"","sources":["../../../src/cli/commands/migrate-diff.ts"],"names":[],"mappings":"AAkBA,MAAM,WAAW,kBAAkB;IACjC,IAAI,CAAC,EAAE,MAAM,CAAC;IACd,SAAS,CAAC,EAAE,MAAM,CAAC;CACpB;AAED,wBAAsB,WAAW,CAAC,OAAO,GAAE,kBAAuB,GAAG,OAAO,CAAC,IAAI,CAAC,CAkGjF"}

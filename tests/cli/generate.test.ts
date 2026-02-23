@@ -45,11 +45,11 @@ describe("generate", () => {
   it("generates migration with auto-incremented number", async () => {
     await generate("migration", "create_users", [], false);
     const content = await readFile(join(tmp, "migrations/001_create_users.ts"), "utf-8");
-    expect(content).toContain("up(adapter");
+    expect(content).toContain("up(schema");
 
     await generate("migration", "add_posts", [], false);
     const content2 = await readFile(join(tmp, "migrations/002_add_posts.ts"), "utf-8");
-    expect(content2).toContain("down(adapter");
+    expect(content2).toContain("down(schema");
   });
 
   it("prints error for unknown type", async () => {

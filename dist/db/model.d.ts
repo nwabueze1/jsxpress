@@ -9,6 +9,5 @@ export declare abstract class Model {
     static timestamps: boolean;
     static softDelete: boolean;
     static query<T = Record<string, unknown>>(adapter: DatabaseAdapter): QueryBuilder<T>;
-    static syncTable(adapter: DatabaseAdapter): Promise<void>;
 }
 //# sourceMappingURL=model.d.ts.map

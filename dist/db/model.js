@@ -1,4 +1,3 @@
-import { Field } from "./field.js";
 import { QueryBuilder } from "./query-builder.js";
 export class Model {
     static table;
@@ -12,17 +11,6 @@ export class Model {
             timestamps: this.timestamps,
             softDelete: this.softDelete,
         });
-    }
-    static async syncTable(adapter) {
-        const schema = { ...this.schema };
-        if (this.timestamps) {
-            schema.created_at = Field.timestamp().notNull();
-            schema.updated_at = Field.timestamp().notNull();
-        }
-        if (this.softDelete) {
-            schema.deleted_at = Field.timestamp();
-        }
-        await adapter.createCollection(this.table, schema);
     }
 }
 //# sourceMappingURL=model.js.map

@@ -13,7 +13,8 @@ Commands:
   dev                                 Start development server with watch mode
   build                               Compile TypeScript with tsc
   migrate <up|down|status>            Run database migrations
-  migrate generate [name]             Auto-generate migration from model diff
+  migrate generate [name]             Create an empty migration file
+  migrate diff [name]                 Auto-generate migration from model diff
 
 Generate types:
   controller  Generate a controller class
