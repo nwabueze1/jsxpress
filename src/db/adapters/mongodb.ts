@@ -16,19 +16,31 @@ const OP_MAP: Record<string, string> = {
   ">=": "$gte",
   "<": "$lt",
   "<=": "$lte",
+  "in": "$in",
+  "not in": "$nin",
 };
+
+function toMongoColumn(column: string): string {
+  return column === "id" ? "_id" : column;
+}
 
 function buildFilter(where: WhereCondition[]): MongoFilter {
   const filter: MongoFilter = {};
   for (const w of where) {
-    if (w.op === "=") {
-      filter[w.column] = w.value;
+    const col = toMongoColumn(w.column);
+    const op = w.op.toLowerCase();
+    if (op === "is null") {
+      filter[col] = null;
+    } else if (op === "is not null") {
+      filter[col] = { $ne: null };
+    } else if (w.op === "=") {
+      filter[col] = w.value;
     } else {
       const mongoOp = OP_MAP[w.op];
       if (!mongoOp) {
         throw new Error(`Unsupported operator for MongoDB: ${w.op}`);
       }
-      filter[w.column] = { [mongoOp]: w.value };
+      filter[col] = { [mongoOp]: w.value };
     }
   }
   return filter;
@@ -79,7 +91,7 @@ export class MongodbAdapter implements DatabaseAdapter {
     if (options.columns?.length) {
       const projection: Record<string, number> = {};
       for (const col of options.columns) {
-        projection[col] = 1;
+        projection[toMongoColumn(col)] = 1;
       }
       cursor = cursor.project(projection);
     }
@@ -87,7 +99,7 @@ export class MongodbAdapter implements DatabaseAdapter {
     if (options.sort?.length) {
       const sort: Record<string, 1 | -1> = {};
       for (const s of options.sort) {
-        sort[s.column] = s.direction === "asc" ? 1 : -1;
+        sort[toMongoColumn(s.column)] = s.direction === "asc" ? 1 : -1;
       }
       cursor = cursor.sort(sort);
     }

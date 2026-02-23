@@ -39,6 +39,11 @@ describe("Field builders", () => {
     expect(def.type).toBe("real");
   });
 
+  it("uuid() creates a uuid field", () => {
+    const def = Field.uuid().toDefinition();
+    expect(def.type).toBe("uuid");
+  });
+
   it("primaryKey() sets primaryKey and notNull", () => {
     const def = Field.serial().primaryKey().toDefinition();
     expect(def.primaryKey).toBe(true);
@@ -66,5 +71,33 @@ describe("Field builders", () => {
     expect(def.notNull).toBe(true);
     expect(def.unique).toBe(true);
     expect(def.defaultValue).toBe("hello");
+  });
+
+  describe("references()", () => {
+    const fakeModel = { table: "users" };
+
+    it("sets referencesTable and defaults referencesColumn to id", () => {
+      const def = Field.integer().references(fakeModel).toDefinition();
+      expect(def.referencesTable).toBe("users");
+      expect(def.referencesColumn).toBe("id");
+      expect(def.onDelete).toBeUndefined();
+    });
+
+    it("uses custom column", () => {
+      const def = Field.integer().references(fakeModel, { column: "uid" }).toDefinition();
+      expect(def.referencesColumn).toBe("uid");
+    });
+
+    it("passes onDelete", () => {
+      const def = Field.integer().references(fakeModel, { onDelete: "cascade" }).toDefinition();
+      expect(def.onDelete).toBe("cascade");
+    });
+
+    it("chains with other modifiers", () => {
+      const def = Field.integer().notNull().references(fakeModel, { onDelete: "cascade" }).toDefinition();
+      expect(def.notNull).toBe(true);
+      expect(def.referencesTable).toBe("users");
+      expect(def.onDelete).toBe("cascade");
+    });
   });
 });

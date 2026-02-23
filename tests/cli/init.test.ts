@@ -130,6 +130,11 @@ describe("init", () => {
     expect(await exists(join(dir, "src", "controllers", "auth", "refresh.ts"))).toBe(true);
     expect(await exists(join(dir, "src", "controllers", "auth", "logout.ts"))).toBe(true);
 
+    // Repositories
+    expect(await exists(join(dir, "src", "repositories", "UserRepository.ts"))).toBe(true);
+    expect(await exists(join(dir, "src", "repositories", "OAuthAccountRepository.ts"))).toBe(true);
+    expect(await exists(join(dir, "src", "repositories", "RefreshTokenRepository.ts"))).toBe(true);
+
     // Google OAuth files (enabled)
     expect(await exists(join(dir, "src", "auth", "oauth", "google.ts"))).toBe(true);
     expect(await exists(join(dir, "src", "controllers", "auth", "google.ts"))).toBe(true);

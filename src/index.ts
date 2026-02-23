@@ -20,9 +20,9 @@ export { Config, ConfigController, CONFIG_KEY, parseEnvFile, validateConfig } fr
 export type { ConfigProps } from "./config/index.js";
 
 // Database
-export { Database, DatabaseController, Model, Field, DATABASE_KEY } from "./db/index.js";
-export { QueryBuilder, MigrationRunner } from "./db/index.js";
-export type { Dialect, DatabaseAdapter, QueryResult, DatabaseProps, Migration, MigrationRecord } from "./db/index.js";
+export { Database, Repository, Model, Field, DATABASE_KEY } from "./db/index.js";
+export { QueryBuilder, MigrationRunner, hasMany, hasOne, belongsTo } from "./db/index.js";
+export type { Dialect, DatabaseAdapter, QueryResult, DatabaseProps, Migration, MigrationRecord, RelationDefinition, OnDelete } from "./db/index.js";
 
 export type { JsxpressRequest, HttpMethod, ServerHandle, NextFunction } from "./types.js";
 export type { JsxElement } from "./types.js";

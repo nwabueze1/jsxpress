@@ -27,6 +27,9 @@ import {
   authLogoutControllerTemplate,
   authOAuthControllerTemplate,
   authOAuthCallbackControllerTemplate,
+  userRepositoryTemplate,
+  oauthAccountRepositoryTemplate,
+  refreshTokenRepositoryTemplate,
 } from "../templates/auth.js";
 
 const green = (s: string) => `\x1b[32m${s}\x1b[0m`;
@@ -89,6 +92,7 @@ export async function init(projectName?: string): Promise<void> {
     await mkdirIfNeeded(join(targetDir, "src", "auth"));
     await mkdirIfNeeded(join(targetDir, "src", "controllers", "auth"));
     await mkdirIfNeeded(join(targetDir, "src", "middleware"));
+    await mkdirIfNeeded(join(targetDir, "src", "repositories"));
 
     if (googleOAuth || facebookOAuth || githubOAuth) {
       await mkdirIfNeeded(join(targetDir, "src", "auth", "oauth"));
@@ -122,6 +126,13 @@ export async function init(projectName?: string): Promise<void> {
       [join(targetDir, "src", "models", "User.ts"), userModelTemplate()],
       [join(targetDir, "src", "models", "OAuthAccount.ts"), oauthAccountModelTemplate()],
       [join(targetDir, "src", "models", "RefreshToken.ts"), refreshTokenModelTemplate()],
+    );
+
+    // Repositories
+    files.push(
+      [join(targetDir, "src", "repositories", "UserRepository.ts"), userRepositoryTemplate()],
+      [join(targetDir, "src", "repositories", "OAuthAccountRepository.ts"), oauthAccountRepositoryTemplate()],
+      [join(targetDir, "src", "repositories", "RefreshTokenRepository.ts"), refreshTokenRepositoryTemplate()],
     );
 
     // Middleware

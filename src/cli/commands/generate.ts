@@ -1,10 +1,10 @@
 import { join } from "node:path";
-import { readdir } from "node:fs/promises";
 import { writeFileWithLog } from "../utils/fs.js";
 import { controllerTemplate } from "../templates/controller.js";
 import { modelTemplate } from "../templates/model.js";
 import { middlewareTemplate } from "../templates/middleware.js";
 import { migrationTemplate } from "../templates/migration.js";
+import { nextMigrationNumber, pad } from "../utils/migration.js";
 
 const red = (s: string) => `\x1b[31m${s}\x1b[0m`;
 
@@ -27,27 +27,6 @@ async function dirExists(path: string): Promise<boolean> {
   } catch {
     return false;
   }
-}
-
-async function nextMigrationNumber(migrationsDir: string): Promise<number> {
-  try {
-    const entries = await readdir(migrationsDir);
-    let max = 0;
-    for (const entry of entries) {
-      const match = entry.match(/^(\d+)/);
-      if (match) {
-        const n = parseInt(match[1], 10);
-        if (n > max) max = n;
-      }
-    }
-    return max + 1;
-  } catch {
-    return 1;
-  }
-}
-
-function pad(n: number, width: number): string {
-  return String(n).padStart(width, "0");
 }
 
 export async function generate(

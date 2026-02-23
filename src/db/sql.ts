@@ -13,6 +13,7 @@ const TYPE_MAP: Record<SqlDialect, Record<FieldType, string>> = {
     timestamp: "TEXT",
     json: "TEXT",
     real: "REAL",
+    uuid: "TEXT",
   },
   postgres: {
     serial: "SERIAL",
@@ -22,6 +23,7 @@ const TYPE_MAP: Record<SqlDialect, Record<FieldType, string>> = {
     timestamp: "TIMESTAMPTZ",
     json: "JSONB",
     real: "DOUBLE PRECISION",
+    uuid: "UUID",
   },
   mysql: {
     serial: "INT AUTO_INCREMENT",
@@ -31,6 +33,7 @@ const TYPE_MAP: Record<SqlDialect, Record<FieldType, string>> = {
     timestamp: "DATETIME",
     json: "JSON",
     real: "DOUBLE",
+    uuid: "CHAR(36)",
   },
 };
 
@@ -48,41 +51,64 @@ export function placeholder(index: number, dialect: Dialect): string {
   return "?";
 }
 
+export function buildColumnDef(name: string, def: FieldDefinition, dialect: SqlDialect): string {
+  const parts: string[] = [quoteIdent(name, dialect), fieldTypeToSql(def.type, dialect)];
+
+  if (def.primaryKey) {
+    if (dialect === "sqlite" && def.type === "serial") {
+      // SQLite: INTEGER PRIMARY KEY is auto-incrementing
+      parts[1] = "INTEGER";
+    }
+    parts.push("PRIMARY KEY");
+  }
+
+  if (def.notNull && !def.primaryKey) {
+    parts.push("NOT NULL");
+  }
+
+  if (def.unique) {
+    parts.push("UNIQUE");
+  }
+
+  if (def.defaultValue !== undefined) {
+    const val = typeof def.defaultValue === "string"
+      ? `'${def.defaultValue}'`
+      : String(def.defaultValue);
+    parts.push(`DEFAULT ${val}`);
+  }
+
+  if (def.referencesTable) {
+    const refCol = def.referencesColumn ?? "id";
+    parts.push(`REFERENCES ${quoteIdent(def.referencesTable, dialect)}(${quoteIdent(refCol, dialect)})`);
+    if (def.onDelete) {
+      parts.push(`ON DELETE ${def.onDelete.toUpperCase()}`);
+    }
+  }
+
+  return parts.join(" ");
+}
+
 export function buildCreateTable(
   tableName: string,
   schema: Record<string, FieldBuilder>,
   dialect: SqlDialect
 ): string {
+  const defs: Record<string, FieldDefinition> = {};
+  for (const [name, builder] of Object.entries(schema)) {
+    defs[name] = builder.toDefinition();
+  }
+  return buildCreateTableFromDefs(tableName, defs, dialect);
+}
+
+export function buildCreateTableFromDefs(
+  tableName: string,
+  schema: Record<string, FieldDefinition>,
+  dialect: SqlDialect,
+): string {
   const cols: string[] = [];
 
-  for (const [name, builder] of Object.entries(schema)) {
-    const def: FieldDefinition = builder.toDefinition();
-    const parts: string[] = [quoteIdent(name, dialect), fieldTypeToSql(def.type, dialect)];
-
-    if (def.primaryKey) {
-      if (dialect === "sqlite" && def.type === "serial") {
-        // SQLite: INTEGER PRIMARY KEY is auto-incrementing
-        parts[1] = "INTEGER";
-      }
-      parts.push("PRIMARY KEY");
-    }
-
-    if (def.notNull && !def.primaryKey) {
-      parts.push("NOT NULL");
-    }
-
-    if (def.unique) {
-      parts.push("UNIQUE");
-    }
-
-    if (def.defaultValue !== undefined) {
-      const val = typeof def.defaultValue === "string"
-        ? `'${def.defaultValue}'`
-        : String(def.defaultValue);
-      parts.push(`DEFAULT ${val}`);
-    }
-
-    cols.push(parts.join(" "));
+  for (const [name, def] of Object.entries(schema)) {
+    cols.push(buildColumnDef(name, def, dialect));
   }
 
   const quotedTable = quoteIdent(tableName, dialect);

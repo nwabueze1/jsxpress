@@ -28,6 +28,9 @@ import {
   authLogoutControllerTemplate,
   authOAuthControllerTemplate,
   authOAuthCallbackControllerTemplate,
+  userRepositoryTemplate,
+  oauthAccountRepositoryTemplate,
+  refreshTokenRepositoryTemplate,
 } from "../../src/cli/templates/auth.js";
 
 describe("controllerTemplate", () => {
@@ -402,9 +405,9 @@ describe("authMiddlewareTemplate", () => {
 });
 
 describe("authRegisterControllerTemplate", () => {
-  it("extends DatabaseController with validation schema", () => {
+  it("extends Controller with validation schema", () => {
     const result = authRegisterControllerTemplate();
-    expect(result).toContain("class Register extends DatabaseController");
+    expect(result).toContain("class Register extends Controller");
     expect(result).toContain("v.string().email()");
     expect(result).toContain("v.string().min(8)");
     expect(result).toContain("v.string().min(1)");
@@ -416,10 +419,16 @@ describe("authRegisterControllerTemplate", () => {
     expect(result).toContain("body: v.object(");
   });
 
-  it("uses Model.query(this.db) for database operations", () => {
+  it("uses this.repo() for database operations", () => {
     const result = authRegisterControllerTemplate();
-    expect(result).toContain("User.query(this.db)");
-    expect(result).toContain("RefreshToken.query(this.db)");
+    expect(result).toContain("this.repo(UserRepository)");
+    expect(result).toContain("this.repo(RefreshTokenRepository)");
+  });
+
+  it("imports repositories instead of models", () => {
+    const result = authRegisterControllerTemplate();
+    expect(result).toContain('from "@/repositories/UserRepository.js"');
+    expect(result).toContain('from "@/repositories/RefreshTokenRepository.js"');
   });
 
   it("imports password and jwt utilities", () => {
@@ -430,29 +439,45 @@ describe("authRegisterControllerTemplate", () => {
 });
 
 describe("authLoginControllerTemplate", () => {
-  it("extends DatabaseController and verifies credentials", () => {
+  it("extends Controller and verifies credentials", () => {
     const result = authLoginControllerTemplate();
-    expect(result).toContain("class Login extends DatabaseController");
+    expect(result).toContain("class Login extends Controller");
     expect(result).toContain("verifyPassword");
     expect(result).toContain("Invalid credentials");
+  });
+
+  it("uses this.repo() for database operations", () => {
+    const result = authLoginControllerTemplate();
+    expect(result).toContain("this.repo(UserRepository)");
+    expect(result).toContain("this.repo(RefreshTokenRepository)");
   });
 });
 
 describe("authRefreshControllerTemplate", () => {
   it("implements token rotation", () => {
     const result = authRefreshControllerTemplate();
-    expect(result).toContain("class Refresh extends DatabaseController");
+    expect(result).toContain("class Refresh extends Controller");
     expect(result).toContain("Token rotation");
     expect(result).toContain("signAccessToken");
     expect(result).toContain("signRefreshToken");
+  });
+
+  it("uses this.repo() for database operations", () => {
+    const result = authRefreshControllerTemplate();
+    expect(result).toContain("this.repo(RefreshTokenRepository)");
   });
 });
 
 describe("authLogoutControllerTemplate", () => {
   it("deletes refresh token and returns noContent", () => {
     const result = authLogoutControllerTemplate();
-    expect(result).toContain("class Logout extends DatabaseController");
+    expect(result).toContain("class Logout extends Controller");
     expect(result).toContain("Res.noContent()");
+  });
+
+  it("uses this.repo() for database operations", () => {
+    const result = authLogoutControllerTemplate();
+    expect(result).toContain("this.repo(RefreshTokenRepository)");
   });
 });
 
@@ -475,11 +500,18 @@ describe("authOAuthControllerTemplate", () => {
 describe("authOAuthCallbackControllerTemplate", () => {
   it("generates callback controller that exchanges code", () => {
     const result = authOAuthCallbackControllerTemplate("google");
-    expect(result).toContain("class GoogleCallback extends DatabaseController");
+    expect(result).toContain("class GoogleCallback extends Controller");
     expect(result).toContain("getGoogleUser");
     expect(result).toContain('provider: "google"');
-    expect(result).toContain("OAuthAccount");
+    expect(result).toContain("OAuthAccountRepository");
     expect(result).toContain("signAccessToken");
+  });
+
+  it("uses this.repo() for database operations", () => {
+    const result = authOAuthCallbackControllerTemplate("google");
+    expect(result).toContain("this.repo(UserRepository)");
+    expect(result).toContain("this.repo(OAuthAccountRepository)");
+    expect(result).toContain("this.repo(RefreshTokenRepository)");
   });
 
   it("handles missing code parameter", () => {
@@ -491,5 +523,60 @@ describe("authOAuthCallbackControllerTemplate", () => {
   it("uses req.query to get code parameter", () => {
     const result = authOAuthCallbackControllerTemplate("google");
     expect(result).toContain('req.query.get("code")');
+  });
+});
+
+// ── Repository template tests ──
+
+describe("userRepositoryTemplate", () => {
+  it("extends Repository and imports User model", () => {
+    const result = userRepositoryTemplate();
+    expect(result).toContain("class UserRepository extends Repository");
+    expect(result).toContain('from "jsxserve"');
+    expect(result).toContain('from "@/models/User.js"');
+  });
+
+  it("has findByEmail, findById, and create methods", () => {
+    const result = userRepositoryTemplate();
+    expect(result).toContain("async findByEmail(email: string)");
+    expect(result).toContain("async findById(id: number)");
+    expect(result).toContain("async create(data:");
+  });
+
+  it("uses User.query(this.db) internally", () => {
+    const result = userRepositoryTemplate();
+    expect(result).toContain("User.query(this.db)");
+  });
+});
+
+describe("oauthAccountRepositoryTemplate", () => {
+  it("extends Repository and imports OAuthAccount model", () => {
+    const result = oauthAccountRepositoryTemplate();
+    expect(result).toContain("class OAuthAccountRepository extends Repository");
+    expect(result).toContain('from "jsxserve"');
+    expect(result).toContain('from "@/models/OAuthAccount.js"');
+  });
+
+  it("has findByProvider and create methods", () => {
+    const result = oauthAccountRepositoryTemplate();
+    expect(result).toContain("async findByProvider(provider: string");
+    expect(result).toContain("async create(data:");
+  });
+});
+
+describe("refreshTokenRepositoryTemplate", () => {
+  it("extends Repository and imports RefreshToken model", () => {
+    const result = refreshTokenRepositoryTemplate();
+    expect(result).toContain("class RefreshTokenRepository extends Repository");
+    expect(result).toContain('from "jsxserve"');
+    expect(result).toContain('from "@/models/RefreshToken.js"');
+  });
+
+  it("has create, findByToken, deleteByToken, and deleteAllForUser methods", () => {
+    const result = refreshTokenRepositoryTemplate();
+    expect(result).toContain("async create(");
+    expect(result).toContain("async findByToken(token: string)");
+    expect(result).toContain("async deleteByToken(token: string)");
+    expect(result).toContain("async deleteAllForUser(userId:");
   });
 });

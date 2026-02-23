@@ -3,7 +3,8 @@ import { jsx } from "../../src/jsx-runtime.js";
 import { serve } from "../../src/index.js";
 import { App } from "../../src/components/App.js";
 import { Database } from "../../src/db/database.js";
-import { DatabaseController } from "../../src/db/database-controller.js";
+import { Controller } from "../../src/components/Controller.js";
+import { Repository } from "../../src/db/repository.js";
 import { Model } from "../../src/db/model.js";
 import { Field } from "../../src/db/field.js";
 import { Res } from "../../src/response.js";
@@ -20,34 +21,52 @@ class User extends Model {
   };
 }
 
-class Users extends DatabaseController {
+class UserRepository extends Repository {
+  async findAll() {
+    return User.query(this.db).findAll();
+  }
+
+  async create(data: { name: string; email: string }) {
+    return User.query(this.db).create(data);
+  }
+
+  async findById(id: number) {
+    return User.query(this.db).where("id", id).findOne();
+  }
+
+  async deleteById(id: number) {
+    return User.query(this.db).where("id", id).delete();
+  }
+}
+
+class Users extends Controller {
   name = "users";
 
   async get() {
-    const users = await User.query(this.db).findAll();
+    const users = await this.repo(UserRepository).findAll();
     return { users };
   }
 
   async post(req: JsxpressRequest) {
     const data = (await req.json()) as { name: string; email: string };
-    const user = await User.query(this.db).create(data);
+    const user = await this.repo(UserRepository).create(data);
     return Res.created(user);
   }
 }
 
-class UserById extends DatabaseController {
+class UserById extends Controller {
   name = ":id";
 
   async get(req: JsxpressRequest) {
     const id = Number(req.params.id || req.path.split("/").pop());
-    const user = await User.query(this.db).where("id", id).findOne();
+    const user = await this.repo(UserRepository).findById(id);
     if (!user) return Res.notFound();
     return user;
   }
 
   async delete(req: JsxpressRequest) {
     const id = Number(req.params.id || req.path.split("/").pop());
-    await User.query(this.db).where("id", id).delete();
+    await this.repo(UserRepository).deleteById(id);
     return Res.noContent();
   }
 }

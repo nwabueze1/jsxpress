@@ -6,7 +6,13 @@ import type { Dialect } from "../../db/adapter.js";
 const red = (s: string) => `\x1b[31m${s}\x1b[0m`;
 const green = (s: string) => `\x1b[32m${s}\x1b[0m`;
 
-export async function migrate(subcommand: string): Promise<void> {
+export async function migrate(subcommand: string, args: string[] = []): Promise<void> {
+  if (subcommand === "generate") {
+    const { migrateGenerate } = await import("./migrate-generate.js");
+    await migrateGenerate({ name: args[0] });
+    return;
+  }
+
   const dialect = process.env.DB_DIALECT as Dialect | undefined;
   const url = process.env.DB_URL;
 
@@ -52,7 +58,7 @@ export async function migrate(subcommand: string): Promise<void> {
 
       default:
         console.log(red(`Unknown migrate subcommand: ${subcommand}`));
-        console.log("Valid subcommands: up, down, status");
+        console.log("Valid subcommands: up, down, status, generate");
     }
   } finally {
     await adapter.close();

@@ -15,6 +15,7 @@ Commands:
   dev                                 Start development server with watch mode
   build                               Compile TypeScript with tsc
   migrate <up|down|status>            Run database migrations
+  migrate generate [name]             Auto-generate migration from model diff
 
 Generate types:
   controller  Generate a controller class
@@ -66,7 +67,7 @@ async function main(): Promise<void> {
       break;
 
     case "migrate":
-      await migrate(args[0]);
+      await migrate(args[0], args.slice(1));
       break;
 
     case "--help":

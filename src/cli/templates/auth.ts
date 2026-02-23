@@ -302,15 +302,89 @@ export class Auth extends Middleware {
 `;
 }
 
+export function userRepositoryTemplate(): string {
+  return `import { Repository } from "jsxserve";
+import { User } from "@/models/User.js";
+
+export class UserRepository extends Repository {
+  async findByEmail(email: string) {
+    return User.query(this.db).where("email", email).findOne();
+  }
+
+  async findById(id: number) {
+    return User.query(this.db).where("id", id).findOne();
+  }
+
+  async create(data: { email: string; password_hash?: string | null; name: string; created_at?: string }) {
+    return User.query(this.db).create({
+      ...data,
+      created_at: data.created_at ?? new Date().toISOString(),
+    });
+  }
+}
+`;
+}
+
+export function oauthAccountRepositoryTemplate(): string {
+  return `import { Repository } from "jsxserve";
+import { OAuthAccount } from "@/models/OAuthAccount.js";
+
+export class OAuthAccountRepository extends Repository {
+  async findByProvider(provider: string, providerUserId: string) {
+    return OAuthAccount.query(this.db)
+      .where("provider", provider)
+      .where("provider_user_id", providerUserId)
+      .findOne();
+  }
+
+  async create(data: { user_id: number; provider: string; provider_user_id: string; email: string }) {
+    return OAuthAccount.query(this.db).create(data);
+  }
+}
+`;
+}
+
+export function refreshTokenRepositoryTemplate(): string {
+  return `import { Repository } from "jsxserve";
+import { RefreshToken } from "@/models/RefreshToken.js";
+
+export class RefreshTokenRepository extends Repository {
+  async create(userId: number | unknown, token: string, expiresAt: string) {
+    return RefreshToken.query(this.db).create({
+      user_id: userId,
+      token,
+      expires_at: expiresAt,
+    });
+  }
+
+  async findByToken(token: string) {
+    return RefreshToken.query(this.db).where("token", token).findOne();
+  }
+
+  async deleteByToken(token: string) {
+    return RefreshToken.query(this.db).where("token", token).delete();
+  }
+
+  async deleteById(id: number | unknown) {
+    return RefreshToken.query(this.db).where("id", id).delete();
+  }
+
+  async deleteAllForUser(userId: number | unknown) {
+    return RefreshToken.query(this.db).where("user_id", userId).delete();
+  }
+}
+`;
+}
+
 export function authRegisterControllerTemplate(): string {
-  return `import { DatabaseController, type JsxpressRequest } from "jsxserve";
+  return `import { Controller, type JsxpressRequest } from "jsxserve";
 import { Res, v } from "jsxserve";
 import { hashPassword } from "@/auth/password.js";
 import { signAccessToken, signRefreshToken } from "@/auth/jwt.js";
-import { User } from "@/models/User.js";
-import { RefreshToken } from "@/models/RefreshToken.js";
+import { UserRepository } from "@/repositories/UserRepository.js";
+import { RefreshTokenRepository } from "@/repositories/RefreshTokenRepository.js";
 
-export class Register extends DatabaseController {
+export class Register extends Controller {
   name = "register";
 
   schema = {
@@ -326,27 +400,26 @@ export class Register extends DatabaseController {
   async post(req: JsxpressRequest) {
     const body = req.body as { email: string; password: string; name: string };
 
-    const existing = await User.query(this.db).where("email", body.email).findOne();
+    const existing = await this.repo(UserRepository).findByEmail(body.email);
     if (existing) {
       return Res.json({ error: "Email already registered" }, 409);
     }
 
     const passwordHash = await hashPassword(body.password);
-    const user = await User.query(this.db).create({
+    const user = await this.repo(UserRepository).create({
       email: body.email,
       password_hash: passwordHash,
       name: body.name,
-      created_at: new Date().toISOString(),
     });
 
     const accessToken = await signAccessToken(String(user.id));
     const refreshToken = await signRefreshToken(String(user.id));
 
-    await RefreshToken.query(this.db).create({
-      user_id: user.id,
-      token: refreshToken,
-      expires_at: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
-    });
+    await this.repo(RefreshTokenRepository).create(
+      user.id,
+      refreshToken,
+      new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
+    );
 
     return Res.json({ accessToken, refreshToken }, 201);
   }
@@ -355,14 +428,14 @@ export class Register extends DatabaseController {
 }
 
 export function authLoginControllerTemplate(): string {
-  return `import { DatabaseController, type JsxpressRequest } from "jsxserve";
+  return `import { Controller, type JsxpressRequest } from "jsxserve";
 import { Res, v } from "jsxserve";
 import { verifyPassword } from "@/auth/password.js";
 import { signAccessToken, signRefreshToken } from "@/auth/jwt.js";
-import { User } from "@/models/User.js";
-import { RefreshToken } from "@/models/RefreshToken.js";
+import { UserRepository } from "@/repositories/UserRepository.js";
+import { RefreshTokenRepository } from "@/repositories/RefreshTokenRepository.js";
 
-export class Login extends DatabaseController {
+export class Login extends Controller {
   name = "login";
 
   schema = {
@@ -377,7 +450,7 @@ export class Login extends DatabaseController {
   async post(req: JsxpressRequest) {
     const body = req.body as { email: string; password: string };
 
-    const user = await User.query(this.db).where("email", body.email).findOne();
+    const user = await this.repo(UserRepository).findByEmail(body.email);
     if (!user || !user.password_hash) {
       return Res.json({ error: "Invalid credentials" }, 401);
     }
@@ -390,11 +463,11 @@ export class Login extends DatabaseController {
     const accessToken = await signAccessToken(String(user.id));
     const refreshToken = await signRefreshToken(String(user.id));
 
-    await RefreshToken.query(this.db).create({
-      user_id: user.id,
-      token: refreshToken,
-      expires_at: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
-    });
+    await this.repo(RefreshTokenRepository).create(
+      user.id,
+      refreshToken,
+      new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
+    );
 
     return Res.json({ accessToken, refreshToken });
   }
@@ -403,12 +476,12 @@ export class Login extends DatabaseController {
 }
 
 export function authRefreshControllerTemplate(): string {
-  return `import { DatabaseController, type JsxpressRequest } from "jsxserve";
+  return `import { Controller, type JsxpressRequest } from "jsxserve";
 import { Res, v } from "jsxserve";
 import { signAccessToken, signRefreshToken } from "@/auth/jwt.js";
-import { RefreshToken } from "@/models/RefreshToken.js";
+import { RefreshTokenRepository } from "@/repositories/RefreshTokenRepository.js";
 
-export class Refresh extends DatabaseController {
+export class Refresh extends Controller {
   name = "refresh";
 
   schema = {
@@ -422,28 +495,28 @@ export class Refresh extends DatabaseController {
   async post(req: JsxpressRequest) {
     const body = req.body as { refreshToken: string };
 
-    const stored = await RefreshToken.query(this.db).where("token", body.refreshToken).findOne();
+    const stored = await this.repo(RefreshTokenRepository).findByToken(body.refreshToken);
     if (!stored) {
       return Res.json({ error: "Invalid refresh token" }, 401);
     }
 
     if (new Date(stored.expires_at as string) < new Date()) {
-      await RefreshToken.query(this.db).where("id", stored.id).delete();
+      await this.repo(RefreshTokenRepository).deleteById(stored.id);
       return Res.json({ error: "Refresh token expired" }, 401);
     }
 
     // Token rotation: delete old, issue new pair
-    await RefreshToken.query(this.db).where("id", stored.id).delete();
+    await this.repo(RefreshTokenRepository).deleteById(stored.id);
 
     const userId = String(stored.user_id);
     const accessToken = await signAccessToken(userId);
     const refreshToken = await signRefreshToken(userId);
 
-    await RefreshToken.query(this.db).create({
-      user_id: stored.user_id,
-      token: refreshToken,
-      expires_at: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
-    });
+    await this.repo(RefreshTokenRepository).create(
+      stored.user_id,
+      refreshToken,
+      new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
+    );
 
     return Res.json({ accessToken, refreshToken });
   }
@@ -452,11 +525,11 @@ export class Refresh extends DatabaseController {
 }
 
 export function authLogoutControllerTemplate(): string {
-  return `import { DatabaseController, type JsxpressRequest } from "jsxserve";
+  return `import { Controller, type JsxpressRequest } from "jsxserve";
 import { Res, v } from "jsxserve";
-import { RefreshToken } from "@/models/RefreshToken.js";
+import { RefreshTokenRepository } from "@/repositories/RefreshTokenRepository.js";
 
-export class Logout extends DatabaseController {
+export class Logout extends Controller {
   name = "logout";
 
   schema = {
@@ -469,7 +542,7 @@ export class Logout extends DatabaseController {
 
   async post(req: JsxpressRequest) {
     const body = req.body as { refreshToken: string };
-    await RefreshToken.query(this.db).where("token", body.refreshToken).delete();
+    await this.repo(RefreshTokenRepository).deleteByToken(body.refreshToken);
     return Res.noContent();
   }
 }
@@ -496,15 +569,15 @@ export class ${name}Auth extends Controller {
 export function authOAuthCallbackControllerTemplate(provider: string): string {
   const name = capitalize(provider);
 
-  return `import { DatabaseController, type JsxpressRequest } from "jsxserve";
+  return `import { Controller, type JsxpressRequest } from "jsxserve";
 import { Res } from "jsxserve";
 import { get${name}User } from "@/auth/oauth/${provider}.js";
 import { signAccessToken, signRefreshToken } from "@/auth/jwt.js";
-import { User } from "@/models/User.js";
-import { OAuthAccount } from "@/models/OAuthAccount.js";
-import { RefreshToken } from "@/models/RefreshToken.js";
+import { UserRepository } from "@/repositories/UserRepository.js";
+import { OAuthAccountRepository } from "@/repositories/OAuthAccountRepository.js";
+import { RefreshTokenRepository } from "@/repositories/RefreshTokenRepository.js";
 
-export class ${name}Callback extends DatabaseController {
+export class ${name}Callback extends Controller {
   name = "${provider}-callback";
 
   async get(req: JsxpressRequest) {
@@ -516,10 +589,7 @@ export class ${name}Callback extends DatabaseController {
     const providerUser = await get${name}User(code);
 
     // Check if OAuth account already linked
-    const oauthAccount = await OAuthAccount.query(this.db)
-      .where("provider", "${provider}")
-      .where("provider_user_id", providerUser.id)
-      .findOne();
+    const oauthAccount = await this.repo(OAuthAccountRepository).findByProvider("${provider}", providerUser.id);
 
     let userId: number;
 
@@ -527,19 +597,18 @@ export class ${name}Callback extends DatabaseController {
       userId = oauthAccount.user_id as number;
     } else {
       // Check if user exists with same email
-      let user = await User.query(this.db).where("email", providerUser.email).findOne();
+      let user = await this.repo(UserRepository).findByEmail(providerUser.email);
 
       if (!user) {
-        user = await User.query(this.db).create({
+        user = await this.repo(UserRepository).create({
           email: providerUser.email,
           name: providerUser.name,
-          created_at: new Date().toISOString(),
         });
       }
 
       userId = user.id as number;
 
-      await OAuthAccount.query(this.db).create({
+      await this.repo(OAuthAccountRepository).create({
         user_id: userId,
         provider: "${provider}",
         provider_user_id: providerUser.id,
@@ -550,11 +619,11 @@ export class ${name}Callback extends DatabaseController {
     const accessToken = await signAccessToken(String(userId));
     const refreshToken = await signRefreshToken(String(userId));
 
-    await RefreshToken.query(this.db).create({
-      user_id: userId,
-      token: refreshToken,
-      expires_at: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
-    });
+    await this.repo(RefreshTokenRepository).create(
+      userId,
+      refreshToken,
+      new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
+    );
 
     return Res.json({ accessToken, refreshToken });
   }

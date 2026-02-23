@@ -1,4 +1,4 @@
-export type FieldType = "serial" | "text" | "integer" | "boolean" | "timestamp" | "json" | "real";
+export type FieldType = "serial" | "text" | "integer" | "boolean" | "timestamp" | "json" | "real" | "uuid";
 
 export interface FieldDefinition {
   type: FieldType;
@@ -6,6 +6,9 @@ export interface FieldDefinition {
   notNull: boolean;
   unique: boolean;
   defaultValue?: unknown;
+  referencesTable?: string;
+  referencesColumn?: string;
+  onDelete?: string;
 }
 
 export class FieldBuilder {
@@ -41,6 +44,16 @@ export class FieldBuilder {
     return this;
   }
 
+  references(
+    target: { table: string },
+    options?: { column?: string; onDelete?: string },
+  ): this {
+    this.def.referencesTable = target.table;
+    this.def.referencesColumn = options?.column ?? "id";
+    this.def.onDelete = options?.onDelete;
+    return this;
+  }
+
   /** @internal */
   toDefinition(): FieldDefinition {
     return { ...this.def };
@@ -68,5 +81,8 @@ export const Field = {
   },
   real(): FieldBuilder {
     return new FieldBuilder("real");
+  },
+  uuid(): FieldBuilder {
+    return new FieldBuilder("uuid");
   },
 };
